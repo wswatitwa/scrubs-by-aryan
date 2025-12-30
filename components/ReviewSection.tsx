@@ -60,7 +60,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ reviews, onAddReview }) =
           <input 
             type="text" 
             placeholder="Your Name"
-            className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-black focus:ring-2 focus:ring-blue-500 outline-none"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             required
@@ -68,7 +68,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ reviews, onAddReview }) =
           <textarea 
             placeholder="Your medical feedback..."
             rows={2}
-            className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+            className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-black focus:ring-2 focus:ring-blue-500 outline-none resize-none"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             required

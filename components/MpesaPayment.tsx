@@ -97,7 +97,7 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
               placeholder="e.g. Dr. Arthur Aryan"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
-              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
+              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
             />
           </div>
 
@@ -106,7 +106,7 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
             <div className="relative">
                <select 
                  required
-                 className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
+                 className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
                  onChange={(e) => {
                     const zone = shippingZones.find(z => z.id === e.target.value);
                     setSelectedZone(zone || null);
@@ -136,7 +136,7 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
                 placeholder="07XX XXX XXX"
                 value={formData.phone}
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600 outline-none transition-all"
+                className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600 outline-none transition-all"
               />
             </div>
           </div>

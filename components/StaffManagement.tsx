@@ -80,11 +80,11 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ staffList, onUpdatePe
             <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onCreateStaff(newStaff); setShowCreateModal(false); }}>
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                <input required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} />
+                <input required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} />
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
-                <input required type="email" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} />
+                <input required type="email" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} />
               </div>
               <button className="w-full py-4 bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 shadow-lg">Create Profile</button>
             </form>

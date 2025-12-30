@@ -74,7 +74,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
               required
               type="text" 
               placeholder="e.g. Nyahururu Referral"
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
               value={formData.orgName}
               onChange={(e) => setFormData({...formData, orgName: e.target.value})}
             />
@@ -82,7 +82,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Institution Type</label>
             <select 
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
               value={formData.orgType}
               onChange={(e) => setFormData({...formData, orgType: e.target.value})}
             >
@@ -102,7 +102,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
               required
               type="text" 
               placeholder="Full Name"
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
               value={formData.contactPerson}
               onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
             />
@@ -113,7 +113,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
               required
               type="email" 
               placeholder="procurement@org.com"
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
@@ -127,7 +127,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
               required
               type="tel" 
               placeholder="07XX XXX XXX"
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
             />
@@ -135,7 +135,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estimated Budget</label>
             <select 
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
               value={formData.budgetRange}
               onChange={(e) => setFormData({...formData, budgetRange: e.target.value})}
             >
@@ -151,7 +151,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Product Category</label>
             <select 
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
               value={formData.productCategory}
               onChange={(e) => setFormData({...formData, productCategory: e.target.value})}
             >
@@ -166,7 +166,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
             <input 
               required
               type="date" 
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
               value={formData.deadline}
               onChange={(e) => setFormData({...formData, deadline: e.target.value})}
             />
@@ -178,7 +178,7 @@ const TenderRequestForm: React.FC<TenderRequestFormProps> = ({ onClose, onSubmit
           <textarea 
             rows={3}
             placeholder="e.g. 200 Sets Navy Blue (M), 100 Sets White (L). Include embroidery details if needed..."
-            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all resize-none"
+            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all resize-none"
             value={formData.requirements}
             onChange={(e) => setFormData({...formData, requirements: e.target.value})}
           />

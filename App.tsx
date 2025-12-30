@@ -16,6 +16,9 @@ import AuthPortal from './components/AuthPortal';
 import FakeNotFound from './components/FakeNotFound';
 import ApparelPage from './ApparelPage';
 import EquipmentPage from './EquipmentPage';
+import DiagnosticsPage from './DiagnosticsPage';
+import AccessoriesPage from './AccessoriesPage';
+import FootwearPage from './FootwearPage';
 import { notifyStaffOfNewOrder } from './services/notificationService';
 
 const SECRET_PATH = '/BLUE-SKYWATITWA';
@@ -64,7 +67,6 @@ const App: React.FC = () => {
 
   const addToCart = (product: Product, selectedColor?: string, selectedSize?: string, selectedStyle?: string) => {
     setCart(prev => {
-      // Create a unique key for items based on variations
       const existing = prev.find(item => 
         item.id === product.id && 
         item.selectedColor === selectedColor && 
@@ -177,31 +179,20 @@ const App: React.FC = () => {
     );
   }
 
-  // APP ROUTING SKELETON
-  if (currentPath === '/apparel') {
-    return (
-      <ApparelPage 
-        onBack={navigateToHome}
-        cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenTracking={() => setIsTrackingOpen(true)}
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onAddToCart={addToCart}
-      />
-    );
-  }
+  const commonPageProps = {
+    onBack: navigateToHome,
+    cartCount: cart.reduce((s, i) => s + i.quantity, 0),
+    onOpenCart: () => setIsCartOpen(true),
+    onOpenTracking: () => setIsTrackingOpen(true),
+    onOpenSearch: () => setIsSearchOpen(true),
+    onAddToCart: addToCart
+  };
 
-  if (currentPath === '/equipment') {
-    return (
-      <EquipmentPage 
-        onBack={navigateToHome}
-        cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenTracking={() => setIsTrackingOpen(true)}
-        onOpenSearch={() => setIsSearchOpen(true)}
-      />
-    );
-  }
+  if (currentPath === '/apparel') return <ApparelPage {...commonPageProps} />;
+  if (currentPath === '/equipment') return <EquipmentPage {...commonPageProps} />;
+  if (currentPath === '/diagnostics') return <DiagnosticsPage {...commonPageProps} />;
+  if (currentPath === '/accessories') return <AccessoriesPage {...commonPageProps} />;
+  if (currentPath === '/footwear') return <FootwearPage {...commonPageProps} />;
 
   const filteredProducts = products.filter(p => {
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
@@ -367,7 +358,7 @@ const App: React.FC = () => {
                         autoFocus
                         type="text" 
                         placeholder="Search by name, fabric, or medical grade..." 
-                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-[2rem] px-10 py-6 text-lg font-bold text-slate-900 focus:border-cyan-500 outline-none transition-all placeholder:text-slate-300"
+                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-[2rem] px-10 py-6 text-lg font-black text-black focus:border-cyan-500 outline-none transition-all placeholder:text-slate-300"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && setIsSearchOpen(false)}
