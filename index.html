@@ -14,6 +14,19 @@
             scroll-behavior: smooth;
             background-color: #001a1a; /* Prestige Midnight Teal */
         }
+        
+        /* Global override for detail-feed font color as requested */
+        input, select, textarea {
+            color: #000000 !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Ensure placeholders remain legible but distinct from typed text */
+        ::placeholder {
+            color: #94a3b8 !important; /* Tailwind slate-400 */
+            opacity: 1;
+        }
+
         ::-webkit-scrollbar {
             width: 12px;
         }
@@ -57,5 +70,6 @@
 </head>
 <body class="bg-[#001a1a] text-white antialiased overflow-x-hidden">
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
