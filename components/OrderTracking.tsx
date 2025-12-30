@@ -53,7 +53,7 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ orders, initialOrderId = 
           <input 
             type="text" 
             placeholder="Enter Order ID (e.g. ORD-1234)"
-            className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all placeholder:text-slate-300"
+            className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-black text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all placeholder:text-slate-300"
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
           />
