@@ -2,11 +2,18 @@
 import { GoogleGenAI } from "@google/genai";
 import { PRODUCTS } from "../constants";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Safe initialization
+const apiKey = process.env.API_KEY || "dummy_key_for_browser_start";
+const ai = new GoogleGenAI({ apiKey });
 
 export const getShoppingAdvice = async (userPrompt: string, history: { role: 'user' | 'assistant', content: string }[]) => {
+  if (apiKey === "dummy_key_for_browser_start") {
+    console.warn("Gemini API Key is missing. Returning default response.");
+    return "Your one-stop shop for quality medical gear is ready to assist. (AI features require an API Key)";
+  }
+
   const productContext = PRODUCTS.map(p => `${p.name} (KES ${p.price}): ${p.description}`).join('\n');
-  
+
   const systemInstruction = `
     You are the "Crubs Concierge", the official AI for "CRUBS BY ARYAN".
     Core Phrases:
@@ -29,18 +36,19 @@ export const getShoppingAdvice = async (userPrompt: string, history: { role: 'us
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: [
         ...history.map(h => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })),
         { role: 'user', parts: [{ text: userPrompt }] }
       ],
       config: {
-        systemInstruction,
+        systemInstruction: { parts: [{ text: systemInstruction }] },
         temperature: 0.5,
       },
     });
 
-    return response.text || "I am currently monitoring our logistics feed. How can I help equip you today?";
+    // @ts-ignore - response type mismatch with local type definition
+    return response.text as string || "I am currently monitoring our logistics feed. How can I help equip you today?";
   } catch (error) {
     console.error("Gemini Error:", error);
     return "Your one-stop shop for quality medical gear is currently updating its system. Please explore our collections above.";

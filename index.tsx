@@ -9,8 +9,14 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <Home />
-  </React.StrictMode>
-);
+console.log('Mounting React root...');
+try {
+  root.render(
+    <React.StrictMode>
+      <Home />
+    </React.StrictMode>
+  );
+  console.log('React root rendered.');
+} catch (e) {
+  console.error('Error rendering root:', e);
+}

@@ -1,9 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import { Product } from './types';
-import { PRODUCTS } from './constants';
-import ProductCard from './components/ProductCard';
 
 interface FootwearPageProps {
   onBack: () => void;
@@ -11,57 +9,304 @@ interface FootwearPageProps {
   onOpenCart: () => void;
   onOpenTracking: () => void;
   onOpenSearch: () => void;
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (product: Product, color?: string, size?: string, style?: string) => void;
 }
 
+type SubCategory = 'Medical Clogs' | 'Performance Sneakers' | 'Compression Wear';
+
+interface FootwearItem extends Product {
+  styles?: string[];
+  colors?: { name: string; hex: string }[];
+  sizes?: string[];
+}
+
+const FOOTWEAR_DATA: Record<SubCategory, FootwearItem[]> = {
+  'Medical Clogs': [
+    {
+      id: 'foot-clog-1',
+      name: 'Elite Ventilation Clogs',
+      category: 'Footwear',
+      price: 4200,
+      description: 'Anti-fatigue sole system with superior arch support. Autoclavable material.',
+      image: 'https://images.unsplash.com/photo-1631548210082-65860628659b?auto=format&fit=crop&q=80&w=600',
+      stock: 35,
+      styles: ['Ventilated', 'Block/Solid'],
+      colors: [
+        { name: 'White', hex: '#FFFFFF' },
+        { name: 'Black', hex: '#111111' },
+        { name: 'Navy', hex: '#000080' },
+        { name: 'Cyan', hex: '#06B6D4' }
+      ],
+      sizes: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45']
+    },
+    {
+      id: 'foot-clog-soft',
+      name: 'Soft-Step Clogs',
+      category: 'Footwear',
+      price: 3500,
+      description: 'Ultra-lightweight EVA material with slip-resistant outsole. All-day comfort.',
+      image: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?auto=format&fit=crop&q=80&w=600',
+      stock: 50,
+      styles: ['Classic Pattern', 'Floral Print'],
+      colors: [
+        { name: 'Pink', hex: '#FFC0CB' },
+        { name: 'Purple', hex: '#800080' },
+        { name: 'Teal', hex: '#008080' }
+      ],
+      sizes: ['36', '37', '38', '39', '40', '41']
+    }
+  ],
+  'Performance Sneakers': [
+    {
+      id: 'foot-sneak-1',
+      name: 'Fluid-Resistant Nursing Sneaker',
+      category: 'Footwear',
+      price: 5500,
+      description: 'Athletic design with fluid-resistant coating and slip-resistant rubber sole.',
+      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=600',
+      stock: 25,
+      colors: [
+        { name: 'White', hex: '#FFFFFF' },
+        { name: 'Black', hex: '#000000' },
+        { name: 'Grey', hex: '#808080' }
+      ],
+      sizes: ['38', '39', '40', '41', '42', '43', '44']
+    },
+    {
+      id: 'foot-sneak-2',
+      name: 'Slip-On Recovery Shoe',
+      category: 'Footwear',
+      price: 4800,
+      description: 'Breathable mesh upper with memory foam insole. Easy slip-on design.',
+      image: 'https://images.unsplash.com/photo-1614113489855-66422ad300a4?auto=format&fit=crop&q=80&w=600',
+      stock: 30,
+      colors: [
+        { name: 'Navy', hex: '#000080' },
+        { name: 'Black', hex: '#000000' }
+      ],
+      sizes: ['37', '38', '39', '40', '41', '42']
+    }
+  ],
+  'Compression Wear': [
+    {
+      id: 'foot-sock-comp',
+      name: 'Compression Socks (15-20 mmHg)',
+      category: 'Footwear',
+      price: 1200,
+      description: 'Graduated compression to reduce fatigue and swelling. Moisture-wicking fabric.',
+      image: 'https://images.unsplash.com/photo-1588645063878-3db8778f5a11?auto=format&fit=crop&q=80&w=600',
+      stock: 100,
+      styles: ['Solid', 'Striped', 'Fun Pattern'],
+      colors: [
+        { name: 'Black', hex: '#000000' },
+        { name: 'Blue', hex: '#0000FF' },
+        { name: 'Multicolor', hex: '#FFA500' }
+      ],
+      sizes: ['S/M', 'L/XL']
+    }
+  ]
+};
+
 const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart }) => {
-  const items = PRODUCTS.filter(p => p.category === 'Footwear');
+  const [activeTab, setActiveTab] = useState<SubCategory>('Medical Clogs');
+  const [selectedProduct, setSelectedProduct] = useState<FootwearItem | null>(null);
+
+  const [selColor, setSelColor] = useState<string>('');
+  const [selSize, setSelSize] = useState<string>('');
+  const [selStyle, setSelStyle] = useState<string>('');
+
+  const handleOpenDetail = (product: FootwearItem) => {
+    setSelectedProduct(product);
+    setSelColor(product.colors && product.colors.length === 1 ? product.colors[0].name : '');
+    setSelSize('');
+    setSelStyle(product.styles?.[0] || '');
+  };
+
+  const isAddDisabled = (selectedProduct?.sizes && !selSize) || (selectedProduct?.colors && selectedProduct.colors.length > 1 && !selColor);
+
+  const handleAddToCart = () => {
+    if (selectedProduct && !isAddDisabled) {
+      onAddToCart(selectedProduct, selColor, selSize, selStyle);
+      setSelectedProduct(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#001a1a]">
-      <Navbar 
-        cartCount={cartCount} 
-        onOpenCart={onOpenCart} 
-        onOpenTracking={onOpenTracking} 
-        onOpenSearch={onOpenSearch} 
-        isAdmin={false} 
+      <Navbar
+        cartCount={cartCount}
+        onOpenCart={onOpenCart}
+        onOpenTracking={onOpenTracking}
+        onOpenSearch={onOpenSearch}
+        isAdmin={false}
+        activePath="/footwear"
       />
-      
+
       <main className="pt-48 pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-center text-center space-y-12 mb-24">
-            <div className="inline-flex items-center gap-4 px-6 py-3 bg-cyan-400/10 text-cyan-300 rounded-full text-[12px] font-black uppercase tracking-[0.3em] border border-cyan-400/30">
-              Department: Orthopedic Support
+            <div className="inline-flex items-center gap-4 px-6 py-3 bg-cyan-500/10 text-cyan-400 rounded-full text-[12px] font-black uppercase tracking-[0.3em] border border-cyan-500/30">
+              Department: Orthopedics
             </div>
-            
+
             <h1 className="text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
-              MEDICAL <span className="text-cyan-400">FOOTWEAR.</span>
+              MEDICAL <span className="text-cyan-500">FOOTWEAR.</span>
             </h1>
-            <p className="text-xl text-white/50 max-w-2xl font-medium">Anti-slip, ergonomic clogs designed for the demands of 12-hour medical shifts.</p>
+
+            <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
+              {(Object.keys(FOOTWEAR_DATA) as SubCategory[]).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-12 py-5 rounded-[2.5rem] text-[11px] font-black uppercase tracking-[0.3em] transition-all ${activeTab === tab ? 'bg-cyan-500 text-[#001a1a] shadow-[0_20px_40px_-10px_rgba(6,182,212,0.4)]' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-            {items.map(item => (
-              <ProductCard 
-                key={item.id} 
-                product={item} 
-                onAddToCart={onAddToCart} 
-                onAddReview={() => {}}
-              />
+            {FOOTWEAR_DATA[activeTab].map(item => (
+              <div
+                key={item.id}
+                onClick={() => handleOpenDetail(item)}
+                className="group cursor-pointer bg-white rounded-[4rem] overflow-hidden prestige-card transition-all duration-700 hover:-translate-y-4 hover:border-b-[12px] hover:border-cyan-500"
+              >
+                <div className="aspect-[4/5] overflow-hidden relative">
+                  {/* Overlay for distinct look */}
+                  <div className="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
+                  <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt={item.name} />
+                </div>
+                <div className="p-12 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">{item.styles?.[0] || 'Ergonomic'}</span>
+                    <span className="text-2xl font-black text-slate-900">KES {item.price.toLocaleString()}</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none">{item.name}</h3>
+                  <p className="text-slate-400 font-medium text-sm italic">{item.description}</p>
+                </div>
+              </div>
             ))}
           </div>
 
           <div className="mt-32 text-center">
-            <button 
+            <button
               onClick={onBack}
               className="px-16 py-7 bg-transparent border-2 border-white/20 text-white rounded-[2.5rem] font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-4 mx-auto group"
             >
-              <i className="fa-solid fa-arrow-left text-cyan-400 group-hover:-translate-x-2 transition-transform"></i>
+              <i className="fa-solid fa-arrow-left text-cyan-500 group-hover:-translate-x-2 transition-transform"></i>
               Back to Home
             </button>
           </div>
         </div>
       </main>
+
+      {/* Product Detail Modal */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-8">
+          <div className="absolute inset-0 bg-[#001a1a]/95 backdrop-blur-3xl" onClick={() => setSelectedProduct(null)}></div>
+          <div className="relative z-10 w-full max-w-5xl bg-white rounded-[5rem] overflow-hidden shadow-[0_50px_150px_-30px_rgba(6,182,212,0.3)] flex flex-col lg:flex-row animate-in slide-in-from-bottom-20 duration-700">
+            <div className="w-full lg:w-1/2 h-[400px] lg:h-auto bg-slate-50 relative">
+              <img src={selectedProduct.image} className="w-full h-full object-cover" alt="" />
+              <div className="absolute top-10 left-10 p-4 bg-white/20 backdrop-blur-xl rounded-2xl text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
+                Nyahururu Logistics Hub • Asset {selectedProduct.id}
+              </div>
+            </div>
+
+            <div className="flex-1 p-10 sm:p-20 overflow-y-auto max-h-[80vh] lg:max-h-none custom-scrollbar">
+              <div className="flex justify-between items-start mb-12">
+                <div className="space-y-2">
+                  <span className="text-[10px] font-black text-cyan-600 uppercase tracking-[0.4em]">{activeTab}</span>
+                  <h2 className="text-4xl sm:text-5xl font-black text-slate-900 uppercase tracking-tighter leading-none">{selectedProduct.name}</h2>
+                </div>
+                <button onClick={() => setSelectedProduct(null)} className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
+                  <i className="fa-solid fa-xmark text-2xl"></i>
+                </button>
+              </div>
+
+              <div className="space-y-12">
+                {/* Style Selection */}
+                {selectedProduct.styles && selectedProduct.styles.length > 1 && (
+                  <div className="space-y-4">
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Select Style</label>
+                    <div className="flex flex-wrap gap-3">
+                      {selectedProduct.styles.map(style => (
+                        <button
+                          key={style}
+                          onClick={() => setSelStyle(style)}
+                          className={`px-8 py-3 rounded-xl text-[11px] font-bold uppercase transition-all ${selStyle === style ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                        >
+                          {style}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Color Swatches */}
+                {selectedProduct.colors && selectedProduct.colors.length > 1 && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Color</label>
+                      <span className="text-[11px] font-black text-cyan-600 uppercase">{selColor || 'Select...'}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      {selectedProduct.colors.map(color => (
+                        <button
+                          key={color.name}
+                          onClick={() => setSelColor(color.name)}
+                          className={`w-14 h-14 rounded-full border-4 transition-all hover:scale-110 flex items-center justify-center ${selColor === color.name ? 'border-cyan-500 scale-125 shadow-xl shadow-cyan-500/20' : 'border-transparent shadow-inner'}`}
+                          style={{ backgroundColor: color.hex }}
+                          title={color.name}
+                        >
+                          {selColor === color.name && <i className="fa-solid fa-check text-white text-xs drop-shadow-md"></i>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Size Grid */}
+                {selectedProduct.sizes && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Size</label>
+                      <span className="text-[11px] font-black text-cyan-600 uppercase">{selSize || 'Select...'}</span>
+                    </div>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                      {selectedProduct.sizes.map(size => (
+                        <button
+                          key={size}
+                          onClick={() => setSelSize(size)}
+                          className={`py-5 rounded-2xl text-[12px] font-black transition-all ${selSize === size ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-100'}`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-8 flex flex-col sm:flex-row items-center gap-8">
+                  <div className="flex-1">
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Fee</p>
+                    <p className="text-5xl font-black text-slate-900 tracking-tighter">KES {selectedProduct.price.toLocaleString()}</p>
+                  </div>
+                  <button
+                    disabled={isAddDisabled}
+                    onClick={handleAddToCart}
+                    className={`w-full sm:w-auto px-16 py-7 rounded-[2.5rem] font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-4 ${isAddDisabled ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-cyan-500 text-white shadow-2xl hover:bg-cyan-400 hover:scale-105 active:scale-95'}`}
+                  >
+                    <i className="fa-solid fa-cart-plus"></i>
+                    {isAddDisabled ? 'Select Options' : 'Add to Cart'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -7,14 +7,17 @@ interface NavbarProps {
   onOpenTracking: () => void;
   onOpenSearch: () => void;
   isAdmin: boolean;
+  activePath?: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onOpenTracking, onOpenSearch, isAdmin }) => {
+const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onOpenTracking, onOpenSearch, isAdmin, activePath }) => {
   const navigateTo = (path: string, e: React.MouseEvent) => {
     e.preventDefault();
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
+
+  const isActive = (path: string) => activePath === path ? 'text-cyan-400 bg-white/5 rounded-xl' : 'hover:text-cyan-400';
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#001a1a]/95 backdrop-blur-3xl border-b border-white/10">
@@ -34,44 +37,48 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onOpenTracking, 
                 </span>
               </div>
             </a>
-            
+
             {!isAdmin && (
-              <div className="hidden lg:flex items-center space-x-12 text-[12px] font-black uppercase tracking-[0.3em] text-white/70">
-                <a 
-                  href="/apparel" 
-                  onClick={(e) => navigateTo('/apparel', e)}
-                  className="hover:text-cyan-400 transition-colors"
-                >
-                  Apparel
-                </a>
-                <a 
-                  href="/equipment" 
-                  onClick={(e) => navigateTo('/equipment', e)}
-                  className="hover:text-cyan-400 transition-colors"
-                >
-                  Equipment
-                </a>
-                <button 
+              <div className="hidden xl:flex items-center space-x-2 text-[11px] font-black uppercase tracking-[0.2em] text-white/70">
+                {[
+                  { name: 'Apparel', path: '/apparel' },
+                  { name: 'Equipment', path: '/equipment' },
+                  { name: 'Diagnostics', path: '/diagnostics' },
+                  { name: 'Accessories', path: '/accessories' },
+                  { name: 'Footwear', path: '/footwear' },
+                  { name: 'PPE', path: '/ppe' }
+                ].map(link => (
+                  <a
+                    key={link.name}
+                    href={link.path}
+                    onClick={(e) => navigateTo(link.path, e)}
+                    className={`px-4 py-2 transition-all ${isActive(link.path)}`}
+                  >
+                    {link.name}
+                  </a>
+                ))}
+
+                <div className="w-px h-8 bg-white/10 mx-4"></div>
+
+                <button
                   onClick={onOpenSearch}
-                  className="hover:text-cyan-400 transition-colors flex items-center gap-2 group/search"
+                  className="hover:text-cyan-400 transition-colors flex items-center gap-2 group/search px-4"
                 >
                   <i className="fa-solid fa-magnifying-glass text-[11px] group-hover/search:scale-110 transition-transform"></i>
-                  Search
                 </button>
-                <button 
+                <button
                   onClick={onOpenTracking}
-                  className="px-8 py-3 bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 rounded-2xl hover:bg-cyan-500 hover:text-[#001a1a] transition-all flex items-center gap-3 group"
+                  className="px-6 py-2 bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 rounded-xl hover:bg-cyan-500 hover:text-[#001a1a] transition-all flex items-center gap-2 group"
                 >
-                  <i className="fa-solid fa-truck-fast text-[11px]"></i> 
-                  Logistics Tracking
+                  Tracking
                 </button>
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center gap-8">
             {!isAdmin && (
-              <button 
+              <button
                 onClick={onOpenCart}
                 className="relative p-5 bg-white/5 text-white rounded-2xl hover:bg-cyan-500 hover:text-[#001a1a] transition-all group border border-white/10 shadow-2xl"
               >
