@@ -6,7 +6,7 @@ import { ShippingZone } from '../types';
 interface MpesaPaymentProps {
   subtotal: number;
   shippingZones: ShippingZone[];
-  onComplete: (name: string, phone: string, location: string, fee: number, code: string) => void;
+  onComplete: (name: string, phone: string, location: string, fee: number, code: string, notes?: string) => void;
   onCancel: () => void;
 }
 
@@ -17,7 +17,8 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
   const [selectedZone, setSelectedZone] = useState<ShippingZone | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    phone: ''
+    phone: '',
+    notes: ''
   });
 
   const total = subtotal + (selectedZone?.fee || 0);
@@ -28,7 +29,7 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
       setError('Please provide Name, Phone, and Select a Destination.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
     try {
@@ -37,7 +38,7 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
         setStkSent(true);
         const result: any = await verifyTransactionStatus(response.checkoutId);
         if (result.status === 'SUCCESS') {
-          onComplete(formData.name, formData.phone, selectedZone.name, selectedZone.fee, result.transactionCode);
+          onComplete(formData.name, formData.phone, selectedZone.name, selectedZone.fee, result.transactionCode, formData.notes);
         } else {
           setError('Payment failed. Please try again.');
           setStkSent(false);
@@ -63,13 +64,13 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
         <div className="space-y-3">
           <h4 className="text-2xl font-black text-blue-900 uppercase tracking-tighter">Check Your Phone</h4>
           <p className="text-sm text-slate-500 font-medium leading-relaxed px-4">
-            We've sent an STK prompt to <span className="text-emerald-600 font-bold">{formData.phone}</span>. 
+            We've sent an STK prompt to <span className="text-emerald-600 font-bold">{formData.phone}</span>.
             Enter your M-PESA PIN to finish.
           </p>
         </div>
         <div className="p-4 bg-slate-50 rounded-2xl flex items-center justify-center gap-2">
-           <i className="fa-solid fa-spinner fa-spin text-emerald-500"></i>
-           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Awaiting Verification...</span>
+          <i className="fa-solid fa-spinner fa-spin text-emerald-500"></i>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Awaiting Verification...</span>
         </div>
       </div>
     );
@@ -91,12 +92,12 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Recipient Name</label>
-            <input 
+            <input
               required
-              type="text" 
+              type="text"
               placeholder="e.g. Dr. Arthur Aryan"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all"
             />
           </div>
@@ -104,25 +105,25 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Shipping Destination (Address Book)</label>
             <div className="relative">
-               <select 
-                 required
-                 className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
-                 onChange={(e) => {
-                    const zone = shippingZones.find(z => z.id === e.target.value);
-                    setSelectedZone(zone || null);
-                 }}
-               >
-                 <option value="">Select Delivery Area...</option>
-                 {shippingZones.map(zone => (
-                    <option key={zone.id} value={zone.id}>{zone.name} (+ KES {zone.fee})</option>
-                 ))}
-               </select>
-               <i className="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none"></i>
+              <select
+                required
+                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all appearance-none"
+                onChange={(e) => {
+                  const zone = shippingZones.find(z => z.id === e.target.value);
+                  setSelectedZone(zone || null);
+                }}
+              >
+                <option value="">Select Delivery Area...</option>
+                {shippingZones.map(zone => (
+                  <option key={zone.id} value={zone.id}>{zone.name} (+ KES {zone.fee})</option>
+                ))}
+              </select>
+              <i className="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none"></i>
             </div>
             {selectedZone && (
-               <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest ml-1">
-                 <i className="fa-solid fa-truck-fast mr-1"></i> Estimated Delivery: {selectedZone.estimatedDays}
-               </p>
+              <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest ml-1">
+                <i className="fa-solid fa-truck-fast mr-1"></i> Estimated Delivery: {selectedZone.estimatedDays}
+              </p>
             )}
           </div>
 
@@ -130,32 +131,43 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">M-PESA Registered Number</label>
             <div className="relative">
               <i className="fa-solid fa-mobile-screen absolute left-6 top-1/2 -translate-y-1/2 text-emerald-500"></i>
-              <input 
+              <input
                 required
-                type="tel" 
+                type="tel"
                 placeholder="07XX XXX XXX"
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600 outline-none transition-all"
               />
             </div>
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Special Order Demands / Instructions</label>
+            <textarea
+              rows={3}
+              placeholder="e.g. Please deliver after 4PM or add specific hospital wing details..."
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all resize-none"
+            />
+          </div>
         </div>
 
         <div className="bg-blue-900 p-6 rounded-[2rem] shadow-xl text-white space-y-3">
-           <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-blue-300">
-              <span>Items Subtotal</span>
-              <span>KES {subtotal.toLocaleString()}</span>
-           </div>
-           <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-blue-300">
-              <span>Shipping Fee</span>
-              <span>{selectedZone ? `KES ${selectedZone.fee.toLocaleString()}` : 'Select Area'}</span>
-           </div>
-           <div className="h-px bg-white/10 my-2"></div>
-           <div className="flex justify-between items-center">
-              <span className="text-xs font-black uppercase tracking-widest">Total Payable</span>
-              <span className="text-2xl font-black">KES {total.toLocaleString()}</span>
-           </div>
+          <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-blue-300">
+            <span>Items Subtotal</span>
+            <span>KES {subtotal.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-blue-300">
+            <span>Shipping Fee</span>
+            <span>{selectedZone ? `KES ${selectedZone.fee.toLocaleString()}` : 'Select Area'}</span>
+          </div>
+          <div className="h-px bg-white/10 my-2"></div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-black uppercase tracking-widest">Total Payable</span>
+            <span className="text-2xl font-black">KES {total.toLocaleString()}</span>
+          </div>
         </div>
 
         {error && (
@@ -165,7 +177,7 @@ const MpesaPayment: React.FC<MpesaPaymentProps> = ({ subtotal, shippingZones, on
           </div>
         )}
 
-        <button 
+        <button
           type="submit"
           disabled={loading}
           className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 disabled:opacity-50"

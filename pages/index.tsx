@@ -19,6 +19,7 @@ import EquipmentPage from '../EquipmentPage';
 import DiagnosticsPage from '../DiagnosticsPage';
 import AccessoriesPage from '../AccessoriesPage';
 import FootwearPage from '../FootwearPage';
+import PPEPage from '../PPEPage';
 import { notifyStaffOfNewOrder } from '../services/notificationService';
 
 const SECRET_PATH = '/BLUE-SKYWATITWA';
@@ -186,7 +187,8 @@ export default function Home() {
     onOpenCart: () => setIsCartOpen(true),
     onOpenTracking: () => setIsTrackingOpen(true),
     onOpenSearch: () => setIsSearchOpen(true),
-    onAddToCart: addToCart
+    onAddToCart: addToCart,
+    products: products
   };
 
   if (currentPath === '/apparel') return <ApparelPage {...commonPageProps} />;
@@ -194,6 +196,7 @@ export default function Home() {
   if (currentPath === '/diagnostics') return <DiagnosticsPage {...commonPageProps} />;
   if (currentPath === '/accessories') return <AccessoriesPage {...commonPageProps} />;
   if (currentPath === '/footwear') return <FootwearPage {...commonPageProps} />;
+  if (currentPath === '/ppe') return <PPEPage {...commonPageProps} />;
 
   const filteredProducts = products.filter(p => {
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;

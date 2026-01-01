@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Product } from './types';
+import { Product, SocialMediaLinks } from './types';
+import Footer from './components/Footer';
 
 interface AccessoriesPageProps {
   onBack: () => void;
@@ -9,131 +10,35 @@ interface AccessoriesPageProps {
   onOpenCart: () => void;
   onOpenTracking: () => void;
   onOpenSearch: () => void;
-  onAddToCart: (product: Product, color?: string, size?: string, style?: string) => void;
+  onAddToCart: (product: Product, color?: string, size?: string, style?: string, instructions?: string) => void;
+  products: Product[];
+  socialLinks: SocialMediaLinks;
+  onOpenTender: () => void;
 }
 
 type SubCategory = 'Watches' | 'Organization' | 'Utility';
 
-interface AccessoryItem extends Product {
-  styles?: string[];
-  colors?: { name: string; hex: string }[];
-  material?: string;
-}
-
-const ACCESSORIES_DATA: Record<SubCategory, AccessoryItem[]> = {
-  'Watches': [
-    {
-      id: 'acc-watch-1',
-      name: 'Silicone Fob Watch',
-      category: 'Accessories',
-      price: 850,
-      description: 'Hygienic silicone infection-control fob watch with precise quartz movement.',
-      image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&q=80&w=600',
-      stock: 60,
-      material: 'Silicone / Stainless Steel',
-      colors: [
-        { name: 'White', hex: '#FFFFFF' },
-        { name: 'Black', hex: '#111111' },
-        { name: 'Navy', hex: '#000080' },
-        { name: 'Pink', hex: '#FFC0CB' },
-        { name: 'Teal', hex: '#008080' }
-      ]
-    },
-    {
-      id: 'acc-watch-2',
-      name: 'Clip-On Digital Watch',
-      category: 'Accessories',
-      price: 1200,
-      description: 'Digital display with stopwatch function, date, and backlight. Durable clip.',
-      image: 'https://images.unsplash.com/photo-1595995252818-1c4b752df25b?auto=format&fit=crop&q=80&w=600',
-      stock: 40,
-      material: 'Polycarbonate',
-      colors: [
-        { name: 'Black', hex: '#000000' },
-        { name: 'White', hex: '#FFFFFF' }
-      ]
-    }
-  ],
-  'Organization': [
-    {
-      id: 'acc-org-pouch',
-      name: 'Pocket Organizer',
-      category: 'Accessories',
-      price: 1500,
-      description: 'Nylon pocket organizer for keeping pens, scissors, and penlights handy. Fits in scrub pocket.',
-      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=600',
-      stock: 80,
-      material: 'Nylon 600D',
-      colors: [
-        { name: 'Black', hex: '#000000' },
-        { name: 'Blue', hex: '#0000FF' },
-        { name: 'Pink', hex: '#FFC0CB' }
-      ]
-    },
-    {
-      id: 'acc-id-holder',
-      name: 'Retractable ID Reel',
-      category: 'Accessories',
-      price: 450,
-      description: 'Heavy duty retractable badge reel with alligator clip. Extends 24 inches.',
-      image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=600',
-      stock: 200,
-      material: 'Plastic / Metal',
-      colors: [
-        { name: 'Black', hex: '#000000' },
-        { name: 'White', hex: '#FFFFFF' },
-        { name: 'Blue', hex: '#4169E1' }
-      ]
-    }
-  ],
-  'Utility': [
-    {
-      id: 'acc-scis-band',
-      name: 'Bandage Scissors',
-      category: 'Accessories',
-      price: 950,
-      description: 'Stainless steel Lister bandage scissors with angled tip for patient safety.',
-      image: 'https://images.unsplash.com/photo-1580665516053-48762747169f?auto=format&fit=crop&q=80&w=600',
-      stock: 50,
-      material: 'Stainless Steel',
-      colors: [
-        { name: 'Silver', hex: '#C0C0C0' },
-        { name: 'Rainbow', hex: '#FF00FF' }
-      ]
-    },
-    {
-      id: 'acc-tourniquet',
-      name: 'Medical Tourniquet',
-      category: 'Accessories',
-      price: 650,
-      description: 'Quick release buckle tourniquet for phlebotomy. Latex-free.',
-      image: 'https://images.unsplash.com/photo-1579165466741-7f35a4755657?auto=format&fit=crop&q=80&w=600',
-      stock: 100,
-      material: 'Nylon / Plastic',
-      colors: [
-        { name: 'Blue', hex: '#0000FF' },
-        { name: 'Red', hex: '#FF0000' }
-      ]
-    }
-  ]
-};
-
-const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart }) => {
+const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
   const [activeTab, setActiveTab] = useState<SubCategory>('Watches');
-  const [selectedProduct, setSelectedProduct] = useState<AccessoryItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const categoryProducts = products.filter(p => p.category === 'Accessories');
+  const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
 
   const [selColor, setSelColor] = useState<string>('');
+  const [instructions, setInstructions] = useState<string>('');
 
-  const handleOpenDetail = (product: AccessoryItem) => {
+  const handleOpenDetail = (product: Product) => {
     setSelectedProduct(product);
     setSelColor(product.colors && product.colors.length === 1 ? product.colors[0].name : '');
+    setInstructions('');
   };
 
   const isAddDisabled = (selectedProduct?.colors && selectedProduct.colors.length > 1 && !selColor);
 
   const handleAddToCart = () => {
     if (selectedProduct && !isAddDisabled) {
-      onAddToCart(selectedProduct, selColor);
+      onAddToCart(selectedProduct, selColor, undefined, undefined, instructions);
       setSelectedProduct(null);
     }
   };
@@ -156,12 +61,12 @@ const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, on
               Department: Daily Essentials
             </div>
 
-            <h1 className="text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
+            <h1 className="text-5xl sm:text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
               CLINICAL <span className="text-teal-500">ACCESSORIES.</span>
             </h1>
 
             <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
-              {(Object.keys(ACCESSORIES_DATA) as SubCategory[]).map(tab => (
+              {(['Watches', 'Organization', 'Utility'] as SubCategory[]).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -174,7 +79,7 @@ const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, on
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-            {ACCESSORIES_DATA[activeTab].map(item => (
+            {displayProducts.map(item => (
               <div
                 key={item.id}
                 onClick={() => handleOpenDetail(item)}
@@ -207,6 +112,12 @@ const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, on
           </div>
         </div>
       </main>
+
+      <Footer
+        socialLinks={socialLinks}
+        onOpenTracking={onOpenTracking}
+        onOpenTender={onOpenTender}
+      />
 
       {/* Product Detail Modal */}
       {selectedProduct && (
@@ -262,6 +173,18 @@ const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, on
                     </div>
                   </div>
                 )}
+
+                {/* Special Instructions */}
+                <div className="space-y-4">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Special Demands / Notes</label>
+                  <textarea
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="e.g. Please add custom engraving details or specific organization needs..."
+                    className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-black focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 outline-none transition-all resize-none"
+                    rows={3}
+                  />
+                </div>
 
                 <div className="pt-8 flex flex-col sm:flex-row items-center gap-8">
                   <div className="flex-1">

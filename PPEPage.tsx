@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Product } from './types';
+import { Product, SocialMediaLinks } from './types';
+import Footer from './components/Footer';
 
 interface PPEPageProps {
     onBack: () => void;
@@ -9,7 +10,10 @@ interface PPEPageProps {
     onOpenCart: () => void;
     onOpenTracking: () => void;
     onOpenSearch: () => void;
-    onAddToCart: (product: Product, color?: string, size?: string, style?: string) => void;
+    onAddToCart: (product: Product, color?: string, size?: string, style?: string, instructions?: string) => void;
+    products: Product[];
+    socialLinks: SocialMediaLinks;
+    onOpenTender: () => void;
 }
 
 type SubCategory = 'Protective Footwear' | 'Headgear' | 'Respiratory' | 'Hand Protection' | 'Body Wear' | 'Eye Protection';
@@ -210,26 +214,31 @@ const PPE_DATA: Record<SubCategory, PPEItem[]> = {
     ]
 };
 
-const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart }) => {
+const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
     const [activeTab, setActiveTab] = useState<SubCategory>('Respiratory');
-    const [selectedProduct, setSelectedProduct] = useState<PPEItem | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+    const categoryProducts = products.filter(p => p.category === 'PPE');
+    const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
 
     const [selColor, setSelColor] = useState<string>('');
     const [selSize, setSelSize] = useState<string>('');
     const [selStyle, setSelStyle] = useState<string>('');
+    const [instructions, setInstructions] = useState<string>('');
 
-    const handleOpenDetail = (product: PPEItem) => {
+    const handleOpenDetail = (product: Product) => {
         setSelectedProduct(product);
         setSelColor(product.colors && product.colors.length === 1 ? product.colors[0].name : '');
         setSelSize('');
         setSelStyle(product.styles?.[0] || '');
+        setInstructions('');
     };
 
     const isAddDisabled = (selectedProduct?.sizes && !selSize) || (selectedProduct?.colors && selectedProduct.colors.length > 1 && !selColor);
 
     const handleAddToCart = () => {
         if (selectedProduct && !isAddDisabled) {
-            onAddToCart(selectedProduct, selColor, selSize, selStyle);
+            onAddToCart(selectedProduct, selColor, selSize, selStyle, instructions);
             setSelectedProduct(null);
         }
     };
@@ -252,12 +261,12 @@ const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpen
                             Department: Infection Control
                         </div>
 
-                        <h1 className="text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
+                        <h1 className="text-5xl sm:text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
                             PPE <span className="text-blue-500">ZONES.</span>
                         </h1>
 
                         <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
-                            {(Object.keys(PPE_DATA) as SubCategory[]).map(tab => (
+                            {(['Protective Footwear', 'Headgear', 'Respiratory', 'Hand Protection', 'Body Wear', 'Eye Protection'] as SubCategory[]).map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
@@ -270,7 +279,7 @@ const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpen
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-                        {PPE_DATA[activeTab].map(item => (
+                        {displayProducts.map(item => (
                             <div
                                 key={item.id}
                                 onClick={() => handleOpenDetail(item)}
@@ -304,6 +313,12 @@ const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpen
                     </div>
                 </div>
             </main>
+
+            <Footer
+                socialLinks={socialLinks}
+                onOpenTracking={onOpenTracking}
+                onOpenTender={onOpenTender}
+            />
 
             {/* Product Detail Modal */}
             {selectedProduct && (
@@ -390,6 +405,18 @@ const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpen
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Special Instructions */}
+                                <div className="space-y-4">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Special Demands / Notes</label>
+                                    <textarea
+                                        value={instructions}
+                                        onChange={(e) => setInstructions(e.target.value)}
+                                        placeholder="e.g. Please check availability of specific shades or add site-delivery instructions..."
+                                        className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all resize-none"
+                                        rows={3}
+                                    />
+                                </div>
 
                                 <div className="pt-8 flex flex-col sm:flex-row items-center gap-8">
                                     <div className="flex-1">

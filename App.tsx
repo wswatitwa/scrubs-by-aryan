@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product, CartItem, Order, OrderStatus, UserRole, TenderInquiry, Review, StaffMember, ShippingZone } from './types';
-import { PRODUCTS, INITIAL_ORDERS, INITIAL_TENDERS, SHIPPING_ZONES } from './constants';
+import { Product, CartItem, Order, OrderStatus, UserRole, TenderInquiry, Review, StaffMember, ShippingZone, SocialMediaLinks } from './types';
+import { PRODUCTS, INITIAL_ORDERS, INITIAL_TENDERS, SHIPPING_ZONES, INITIAL_SOCIAL_LINKS } from './constants';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ProductCard from './components/ProductCard';
@@ -12,6 +12,7 @@ import MpesaPayment from './components/MpesaPayment';
 import OrderTracking from './components/OrderTracking';
 import TenderRequestForm from './components/TenderRequestForm';
 import FlashSaleBanner from './components/FlashSaleBanner';
+import Footer from './components/Footer';
 import AuthPortal from './components/AuthPortal';
 import FakeNotFound from './components/FakeNotFound';
 import ApparelPage from './ApparelPage';
@@ -21,6 +22,7 @@ import AccessoriesPage from './AccessoriesPage';
 import FootwearPage from './FootwearPage';
 import PPEPage from './PPEPage';
 import { notifyStaffOfNewOrder } from './services/notificationService';
+import { generateReceipt } from './ReceiptService';
 
 const SECRET_PATH = '/BLUE-SKYWATITWA';
 const FORBIDDEN_PATHS = ['/admin', '/login', '/staff', '/backend', '/dashboard'];
@@ -43,6 +45,7 @@ const App: React.FC = () => {
   const [staffAlert, setStaffAlert] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
+  const [socialLinks, setSocialLinks] = useState<SocialMediaLinks>(INITIAL_SOCIAL_LINKS);
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -66,23 +69,25 @@ const App: React.FC = () => {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
-  const addToCart = (product: Product, selectedColor?: string, selectedSize?: string, selectedStyle?: string) => {
+  const addToCart = (product: Product, selectedColor?: string, selectedSize?: string, selectedStyle?: string, specialInstructions?: string) => {
     setCart(prev => {
       const existing = prev.find(item =>
         item.id === product.id &&
         item.selectedColor === selectedColor &&
-        item.selectedSize === selectedSize
+        item.selectedSize === selectedSize &&
+        item.specialInstructions === specialInstructions
       );
 
       if (existing) {
         return prev.map(item =>
           (item.id === product.id &&
             item.selectedColor === selectedColor &&
-            item.selectedSize === selectedSize)
+            item.selectedSize === selectedSize &&
+            item.specialInstructions === specialInstructions)
             ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1, selectedColor, selectedSize, selectedStyle }];
+      return [...prev, { ...product, quantity: 1, selectedColor, selectedSize, selectedStyle, specialInstructions }];
     });
     setIsCartOpen(true);
   };
@@ -103,7 +108,7 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleCheckoutComplete = (name: string, phone: string, location: string, fee: number, code: string) => {
+  const handleCheckoutComplete = (name: string, phone: string, location: string, fee: number, code: string, notes?: string) => {
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const newOrder: Order = {
       id: `ORD-${Math.floor(Math.random() * 9000) + 1000}`,
@@ -117,13 +122,17 @@ const App: React.FC = () => {
       status: 'Paid',
       mpesaCode: code,
       createdAt: new Date().toISOString(),
-      shippingMethod: 'Nationwide Express Hub'
+      shippingMethod: 'Nationwide Express Hub',
+      notes: notes
     };
     setOrders([newOrder, ...orders]);
     setLastOrder(newOrder);
     setCart([]);
     setIsCheckoutOpen(false);
     setIsCartOpen(false);
+
+    // Trigger automatic receipt download
+    generateReceipt(newOrder);
 
     const alertData = notifyStaffOfNewOrder(newOrder.id);
     setStaffAlert(alertData.message);
@@ -174,6 +183,8 @@ const App: React.FC = () => {
           onSetFlashSale={(id, disc) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, originalPrice: prod.price, price: prod.price * (1 - disc / 100) } : prod))}
           onAddProduct={(p) => setProducts([{ ...p, id: `PRD-${Date.now()}`, reviews: [] }, ...products])}
           onUpdateShippingZone={(id, fee) => setShippingZones(prev => prev.map(z => z.id === id ? { ...z, fee } : z))}
+          socialLinks={socialLinks}
+          onUpdateSocialLinks={setSocialLinks}
           onLogout={handleLogout}
         />
       </div>
@@ -186,7 +197,10 @@ const App: React.FC = () => {
     onOpenCart: () => setIsCartOpen(true),
     onOpenTracking: () => setIsTrackingOpen(true),
     onOpenSearch: () => setIsSearchOpen(true),
-    onAddToCart: addToCart
+    onAddToCart: addToCart,
+    products: products,
+    socialLinks: socialLinks,
+    onOpenTender: () => setIsTenderOpen(true)
   };
 
   if (currentPath === '/apparel') return <ApparelPage {...commonPageProps} />;
@@ -235,8 +249,8 @@ const App: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-end gap-16 mb-28">
               <div className="space-y-6 text-center md:text-left">
-                <h2 className="text-7xl font-black text-white tracking-tighter uppercase leading-none">
-                  THE <span className="text-cyan-400">SHOPPING CART.</span>
+                <h2 className="text-4xl sm:text-7xl font-black text-white tracking-tighter uppercase leading-none">
+                  THE <span className="text-cyan-400">CLINICAL FEED.</span>
                 </h2>
                 <p className="text-white/60 max-w-xl font-medium tracking-wide text-lg">Equipping healthcare professionals nationwide with the finest clinical gear.</p>
               </div>
@@ -292,28 +306,11 @@ const App: React.FC = () => {
         </section>
       </main>
 
-      <footer className="bg-[#001515] py-32 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-16 text-center">
-          <div className="flex items-center gap-6 group">
-            <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-cyan-400 border border-cyan-500/20 shadow-2xl"><i className="fa-solid fa-staff-snake text-2xl"></i></div>
-            <div className="flex flex-col text-left">
-              <span className="text-3xl font-black text-white tracking-tighter uppercase leading-none">CRUBS <span className="text-cyan-400">BY ARYAN</span></span>
-              <span className="text-[10px] font-black text-cyan-600 tracking-[0.4em] uppercase mt-1">Nyahururu • Nationwide Delivery</span>
-            </div>
-          </div>
-          <div className="max-w-2xl">
-            <p className="text-xl font-bold text-white/80 italic leading-relaxed">
-              "Your one-stop shop for quality medical gear. Equipping you to deliver as a healthcare professional."
-            </p>
-          </div>
-          <p className="text-[12px] font-black uppercase tracking-[0.8em] text-white/20">EST 2024 • KENYA'S MEDICAL HUB</p>
-          <div className="flex flex-wrap justify-center gap-16">
-            <button onClick={() => setIsTrackingOpen(true)} className="text-[11px] font-black text-white/40 uppercase tracking-[0.4em] hover:text-cyan-400 transition-colors">Nationwide Tracking</button>
-            <button onClick={() => setIsTenderOpen(true)} className="text-[11px] font-black text-white/40 uppercase tracking-[0.4em] hover:text-cyan-400 transition-colors">Bulk Purchases</button>
-            <a href="mailto:info@crubs.com" className="text-[11px] font-black text-white/40 uppercase tracking-[0.4em] hover:text-cyan-400 transition-colors">Customer Desk</a>
-          </div>
-        </div>
-      </footer>
+      <Footer
+        socialLinks={socialLinks}
+        onOpenTracking={() => setIsTrackingOpen(true)}
+        onOpenTender={() => setIsTenderOpen(true)}
+      />
 
       <CartSidebar
         isOpen={isCartOpen}

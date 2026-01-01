@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Product } from './types';
+import { Product, SocialMediaLinks } from './types';
+import Footer from './components/Footer';
 
 interface FootwearPageProps {
   onBack: () => void;
@@ -9,7 +10,10 @@ interface FootwearPageProps {
   onOpenCart: () => void;
   onOpenTracking: () => void;
   onOpenSearch: () => void;
-  onAddToCart: (product: Product, color?: string, size?: string, style?: string) => void;
+  onAddToCart: (product: Product, color?: string, size?: string, style?: string, instructions?: string) => void;
+  products: Product[];
+  socialLinks: SocialMediaLinks;
+  onOpenTender: () => void;
 }
 
 type SubCategory = 'Medical Clogs' | 'Performance Sneakers' | 'Compression Wear';
@@ -107,26 +111,31 @@ const FOOTWEAR_DATA: Record<SubCategory, FootwearItem[]> = {
   ]
 };
 
-const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart }) => {
+const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
   const [activeTab, setActiveTab] = useState<SubCategory>('Medical Clogs');
-  const [selectedProduct, setSelectedProduct] = useState<FootwearItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const categoryProducts = products.filter(p => p.category === 'Footwear');
+  const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
 
   const [selColor, setSelColor] = useState<string>('');
   const [selSize, setSelSize] = useState<string>('');
   const [selStyle, setSelStyle] = useState<string>('');
+  const [instructions, setInstructions] = useState<string>('');
 
-  const handleOpenDetail = (product: FootwearItem) => {
+  const handleOpenDetail = (product: Product) => {
     setSelectedProduct(product);
     setSelColor(product.colors && product.colors.length === 1 ? product.colors[0].name : '');
     setSelSize('');
     setSelStyle(product.styles?.[0] || '');
+    setInstructions('');
   };
 
   const isAddDisabled = (selectedProduct?.sizes && !selSize) || (selectedProduct?.colors && selectedProduct.colors.length > 1 && !selColor);
 
   const handleAddToCart = () => {
     if (selectedProduct && !isAddDisabled) {
-      onAddToCart(selectedProduct, selColor, selSize, selStyle);
+      onAddToCart(selectedProduct, selColor, selSize, selStyle, instructions);
       setSelectedProduct(null);
     }
   };
@@ -149,7 +158,7 @@ const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCa
               Department: Orthopedics
             </div>
 
-            <h1 className="text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
+            <h1 className="text-5xl sm:text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
               MEDICAL <span className="text-cyan-500">FOOTWEAR.</span>
             </h1>
 
@@ -167,7 +176,7 @@ const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCa
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-            {FOOTWEAR_DATA[activeTab].map(item => (
+            {displayProducts.map(item => (
               <div
                 key={item.id}
                 onClick={() => handleOpenDetail(item)}
@@ -201,6 +210,12 @@ const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCa
           </div>
         </div>
       </main>
+
+      <Footer
+        socialLinks={socialLinks}
+        onOpenTracking={onOpenTracking}
+        onOpenTender={onOpenTender}
+      />
 
       {/* Product Detail Modal */}
       {selectedProduct && (
@@ -267,26 +282,17 @@ const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCa
                   </div>
                 )}
 
-                {/* Size Grid */}
-                {selectedProduct.sizes && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Size</label>
-                      <span className="text-[11px] font-black text-cyan-600 uppercase">{selSize || 'Select...'}</span>
-                    </div>
-                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                      {selectedProduct.sizes.map(size => (
-                        <button
-                          key={size}
-                          onClick={() => setSelSize(size)}
-                          className={`py-5 rounded-2xl text-[12px] font-black transition-all ${selSize === size ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-100'}`}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Special Instructions */}
+                <div className="space-y-4">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Special Demands / Notes</label>
+                  <textarea
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="e.g. Please add extra orthopedic padding or specific width requirements..."
+                    className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-black focus:ring-4 focus:ring-cyan-500/10 focus:border-cyan-600 outline-none transition-all resize-none"
+                    rows={3}
+                  />
+                </div>
 
                 <div className="pt-8 flex flex-col sm:flex-row items-center gap-8">
                   <div className="flex-1">

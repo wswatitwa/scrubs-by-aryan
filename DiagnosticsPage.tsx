@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Product } from './types';
+import { Product, SocialMediaLinks } from './types';
+import Footer from './components/Footer';
 
 interface DiagnosticsPageProps {
   onBack: () => void;
@@ -9,124 +10,30 @@ interface DiagnosticsPageProps {
   onOpenCart: () => void;
   onOpenTracking: () => void;
   onOpenSearch: () => void;
-  onAddToCart: (product: Product, color?: string, size?: string, style?: string) => void;
+  onAddToCart: (product: Product, color?: string, size?: string, style?: string, instructions?: string) => void;
+  products: Product[];
+  socialLinks: SocialMediaLinks;
+  onOpenTender: () => void;
 }
 
 type SubCategory = 'Glucometers' | 'Rapid Test Kits' | 'Lab Consumables';
 
-interface DiagnosticItem extends Product {
-  model?: string;
-  includes?: string[];
-}
-
-const DIAGNOSTICS_DATA: Record<SubCategory, DiagnosticItem[]> = {
-  'Glucometers': [
-    {
-      id: 'diag-glu-1',
-      name: 'Accu-Chek Active Kit',
-      category: 'Diagnostics',
-      price: 3500,
-      description: 'Reliable and fast blood glucose monitoring system. Easy to handle.',
-      image: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&q=80&w=600',
-      stock: 50,
-      model: 'Roche Accu-Chek Active',
-      includes: ['Meter', '10 Test Strips', 'Lancing Device']
-    },
-    {
-      id: 'diag-glu-2',
-      name: 'OneTouch Select Plus',
-      category: 'Diagnostics',
-      price: 4200,
-      description: 'Simple 3-color range indicator to understand results. Fast 5s test time.',
-      image: 'https://images.unsplash.com/photo-1628543108426-30238dd551aa?auto=format&fit=crop&q=80&w=600',
-      stock: 35,
-      model: 'OneTouch Select Plus Simple',
-      includes: ['Meter', '10 Strips', 'Case']
-    },
-    {
-      id: 'diag-glu-3',
-      name: 'Sinocare Safe-Accu',
-      category: 'Diagnostics',
-      price: 1800,
-      description: 'Affordable and accurate monitoring. Large display.',
-      image: 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?auto=format&fit=crop&q=80&w=600',
-      stock: 80,
-      model: 'Sinocare Safe-Accu',
-      includes: ['Meter', '50 Strips', '50 Lancets']
-    }
-  ],
-  'Rapid Test Kits': [
-    {
-      id: 'diag-test-malaria',
-      name: 'Malaria Pf/Pv Antigen Test',
-      category: 'Diagnostics',
-      price: 2500,
-      description: 'Rapid chromatographic immunoassay for qualitative detection. Pack of 25.',
-      image: 'https://images.unsplash.com/photo-1579165466741-7f35a4755657?auto=format&fit=crop&q=80&w=600',
-      stock: 100,
-      model: 'Standard Q Malaria',
-      includes: ['25 Cassettes', 'Buffer', 'Lancets']
-    },
-    {
-      id: 'diag-test-hpy',
-      name: 'H. Pylori Antibody Test',
-      category: 'Diagnostics',
-      price: 3000,
-      description: 'One step rapid test for detection of H. pylori antibodies. Pack of 25.',
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=600',
-      stock: 60,
-      model: 'Generic Rapid Test',
-      includes: ['25 Devices', 'Buffer Solution']
-    },
-    {
-      id: 'diag-test-preg',
-      name: 'HCG Pregnancy Strips',
-      category: 'Diagnostics',
-      price: 500,
-      description: 'High sensitivity urine test strips. Bulk pack of 50.',
-      image: 'https://images.unsplash.com/photo-1624797432677-6f803a98acb3?auto=format&fit=crop&q=80&w=600',
-      stock: 200,
-      model: 'Novatest HCG',
-      includes: ['50 Strips']
-    }
-  ],
-  'Lab Consumables': [
-    {
-      id: 'diag-urine-10',
-      name: 'Urinalysis Reagent Strips (10P)',
-      category: 'Diagnostics',
-      price: 1500,
-      description: '10-parameter urine test strips (Leukocytes, Nitrite, Urobilinogen, etc.). Bottle of 100.',
-      image: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&q=80&w=600',
-      stock: 150,
-      model: 'Uriscan 10',
-      includes: ['100 Strips']
-    },
-    {
-      id: 'diag-vac-set',
-      name: 'Vacutainer Tubes (EDTA)',
-      category: 'Diagnostics',
-      price: 1200,
-      description: 'Lavender top tubes for whole blood hematology determinations. Tray of 100.',
-      image: 'https://images.unsplash.com/photo-1579165466741-7f35a4755657?auto=format&fit=crop&q=80&w=600',
-      stock: 300,
-      model: 'BD Vacutainer',
-      includes: ['100 Tubes']
-    }
-  ]
-};
-
-const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart }) => {
+const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
   const [activeTab, setActiveTab] = useState<SubCategory>('Glucometers');
-  const [selectedProduct, setSelectedProduct] = useState<DiagnosticItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  const handleOpenDetail = (product: DiagnosticItem) => {
+  const categoryProducts = products.filter(p => p.category === 'Diagnostics');
+  const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
+  const [instructions, setInstructions] = useState<string>('');
+
+  const handleOpenDetail = (product: Product) => {
     setSelectedProduct(product);
+    setInstructions('');
   };
 
   const handleAddToCart = () => {
     if (selectedProduct) {
-      onAddToCart(selectedProduct);
+      onAddToCart(selectedProduct, undefined, undefined, undefined, instructions);
       setSelectedProduct(null);
     }
   };
@@ -149,12 +56,12 @@ const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, on
               Department: Pathology
             </div>
 
-            <h1 className="text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
+            <h1 className="text-5xl sm:text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
               BLOOD <span className="text-indigo-500">DIAGNOSTICS.</span>
             </h1>
 
             <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
-              {(Object.keys(DIAGNOSTICS_DATA) as SubCategory[]).map(tab => (
+              {(['Glucometers', 'Rapid Test Kits', 'Lab Consumables'] as SubCategory[]).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -167,7 +74,7 @@ const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, on
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-            {DIAGNOSTICS_DATA[activeTab].map(item => (
+            {displayProducts.map(item => (
               <div
                 key={item.id}
                 onClick={() => handleOpenDetail(item)}
@@ -201,6 +108,12 @@ const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, on
           </div>
         </div>
       </main>
+
+      <Footer
+        socialLinks={socialLinks}
+        onOpenTracking={onOpenTracking}
+        onOpenTender={onOpenTender}
+      />
 
       {/* Product Detail Modal */}
       {selectedProduct && (
@@ -237,6 +150,18 @@ const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, on
                     </div>
                   </div>
                 )}
+
+                {/* Special Instructions */}
+                <div className="space-y-4">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Special Demands / Notes</label>
+                  <textarea
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="e.g. Please check availability of specific test parameters or add specific delivery notes..."
+                    className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-black focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all resize-none"
+                    rows={3}
+                  />
+                </div>
 
                 <div className="pt-8 flex flex-col sm:flex-row items-center gap-8">
                   <div className="flex-1">

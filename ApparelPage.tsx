@@ -1,7 +1,8 @@
 // Fix: Corrected corrupted import statement
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Product } from './types';
+import { Product, SocialMediaLinks } from './types';
+import Footer from './components/Footer';
 
 interface ApparelPageProps {
   onBack: () => void;
@@ -9,112 +10,41 @@ interface ApparelPageProps {
   onOpenCart: () => void;
   onOpenTracking: () => void;
   onOpenSearch: () => void;
-  onAddToCart: (product: Product, color?: string, size?: string, style?: string) => void;
+  onAddToCart: (product: Product, color?: string, size?: string, style?: string, instructions?: string) => void;
+  products: Product[];
+  socialLinks: SocialMediaLinks;
+  onOpenTender: () => void;
 }
 
-type SubCategory = 'Scrubs' | 'Lab Coats' | 'Medical Clogs';
+type SubCategory = 'Scrubs' | 'Lab Coats';
 
-interface ApparelItem extends Product {
-  styles?: string[];
-  colors?: { name: string; hex: string }[];
-  sizes?: string[];
-}
-
-const APPAREL_DATA: Record<SubCategory, ApparelItem[]> = {
-  'Scrubs': [
-    {
-      id: 'ap-scr-1',
-      name: 'V-Neck Performance Top',
-      category: 'Apparel',
-      price: 1800,
-      description: 'Ultra-soft moisture wicking fabric with reinforced seams.',
-      image: 'https://images.unsplash.com/photo-1599493356621-1969311a7692?auto=format&fit=crop&q=80&w=600',
-      stock: 120,
-      styles: ['V-Neck'],
-      colors: [
-        { name: 'Navy', hex: '#000080' },
-        { name: 'Royal Blue', hex: '#4169E1' },
-        { name: 'Burgundy', hex: '#800020' },
-        { name: 'Teal', hex: '#008080' },
-        { name: 'Hunter Green', hex: '#355E3B' }
-      ],
-      sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL']
-    },
-    {
-      id: 'ap-scr-2',
-      name: 'Jogger Flex Pants',
-      category: 'Apparel',
-      price: 2200,
-      description: 'Cuffed jogger design with 5-pocket clinical utility system.',
-      image: 'https://images.unsplash.com/photo-1624727828489-a1e03b79bba8?auto=format&fit=crop&q=80&w=600',
-      stock: 85,
-      styles: ['Jogger'],
-      colors: [
-        { name: 'Navy', hex: '#000080' },
-        { name: 'Burgundy', hex: '#800020' },
-        { name: 'Teal', hex: '#008080' }
-      ],
-      sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL']
-    }
-  ],
-  'Lab Coats': [
-    {
-      id: 'ap-lab-1',
-      name: 'Professional Full-Length Coat',
-      category: 'Apparel',
-      price: 3500,
-      description: 'Heavyweight blend with stain-resistant coating and internal tablet pockets.',
-      image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&q=80&w=600',
-      stock: 40,
-      styles: ['Full', 'Tailored'],
-      colors: [
-        { name: 'Cream White', hex: '#FFFDD0' },
-        { name: 'Blue White', hex: '#F0F8FF' }
-      ],
-      sizes: ['S', 'M', 'L', 'XL', '2XL']
-    }
-  ],
-  'Medical Clogs': [
-    {
-      id: 'ap-clg-1',
-      name: 'Elite Ventilation Clogs',
-      category: 'Footwear',
-      price: 4200,
-      description: 'Anti-fatigue sole system with superior arch support for long shifts.',
-      image: 'https://images.unsplash.com/photo-1631548210082-65860628659b?auto=format&fit=crop&q=80&w=600',
-      stock: 25,
-      styles: ['Block', 'Ventilated'],
-      colors: [
-        { name: 'Professional Black', hex: '#111111' },
-        { name: 'Classic White', hex: '#FFFFFF' },
-        { name: 'Clinical Navy', hex: '#000080' }
-      ],
-      sizes: ['EU 36', 'EU 37', 'EU 38', 'EU 39', 'EU 40', 'EU 41', 'EU 42', 'EU 43', 'EU 44', 'EU 45', 'EU 46']
-    }
-  ]
-};
-
-const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart }) => {
+const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
   const [activeTab, setActiveTab] = useState<SubCategory>('Scrubs');
-  const [selectedProduct, setSelectedProduct] = useState<ApparelItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Filter products for this page
+  const categoryProducts = products.filter(p => p.category === 'Apparel');
+  const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
 
   // Variation State
   const [selColor, setSelColor] = useState<string>('');
   const [selSize, setSelSize] = useState<string>('');
   const [selStyle, setSelStyle] = useState<string>('');
+  const [instructions, setInstructions] = useState<string>('');
 
   const isAddDisabled = !selColor || !selSize;
 
-  const handleOpenDetail = (product: ApparelItem) => {
+  const handleOpenDetail = (product: Product) => {
     setSelectedProduct(product);
     setSelColor('');
     setSelSize('');
     setSelStyle(product.styles?.[0] || '');
+    setInstructions('');
   };
 
   const handleAddToCart = () => {
     if (selectedProduct && !isAddDisabled) {
-      onAddToCart(selectedProduct, selColor, selSize, selStyle);
+      onAddToCart(selectedProduct, selColor, selSize, selStyle, instructions);
       setSelectedProduct(null);
     }
   };
@@ -137,13 +67,13 @@ const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart
               Department: Professional Textiles
             </div>
 
-            <h1 className="text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
+            <h1 className="text-5xl sm:text-7xl lg:text-[9rem] font-black tracking-[-0.07em] text-white leading-none uppercase text-glow">
               APPAREL <span className="text-lime-400">SHOPPING CART.</span>
             </h1>
 
             {/* Sub-Category Tabs */}
             <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
-              {(Object.keys(APPAREL_DATA) as SubCategory[]).map(tab => (
+              {(['Scrubs', 'Lab Coats'] as SubCategory[]).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -156,7 +86,7 @@ const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-            {APPAREL_DATA[activeTab].map(item => (
+            {displayProducts.map(item => (
               <div
                 key={item.id}
                 onClick={() => handleOpenDetail(item)}
@@ -188,6 +118,12 @@ const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart
           </div>
         </div>
       </main>
+
+      <Footer
+        socialLinks={socialLinks}
+        onOpenTracking={onOpenTracking}
+        onOpenTender={onOpenTender}
+      />
 
       {/* Product Detail Modal */}
       {selectedProduct && (
@@ -271,6 +207,18 @@ const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart
                   </div>
                 </div>
 
+                {/* Special Instructions */}
+                <div className="space-y-4">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Special Demands / Notes</label>
+                  <textarea
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="e.g. Please add extra embroidery names, or specific pocket requirements..."
+                    className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-black focus:ring-4 focus:ring-lime-500/10 focus:border-lime-600 outline-none transition-all resize-none"
+                    rows={3}
+                  />
+                </div>
+
                 <div className="pt-8 flex flex-col sm:flex-row items-center gap-8">
                   <div className="flex-1">
                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Equipping Fee</p>
@@ -293,6 +241,5 @@ const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart
     </div>
   );
 };
-
 
 export default ApparelPage;

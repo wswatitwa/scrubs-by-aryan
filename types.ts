@@ -12,6 +12,7 @@ export interface Product {
   id: string;
   name: string;
   category: string;
+  subCategory?: string;
   price: number;
   originalPrice?: number;
   description: string;
@@ -19,6 +20,14 @@ export interface Product {
   isFeatured?: boolean;
   stock: number;
   reviews?: Review[];
+  styles?: string[];
+  colors?: { name: string; hex: string }[];
+  sizes?: string[];
+  model?: string;
+  warranty?: string;
+  material?: string;
+  includes?: string[];
+  packageSize?: string;
 }
 
 export interface ShippingZone {
@@ -33,6 +42,7 @@ export interface CartItem extends Product {
   selectedColor?: string;
   selectedSize?: string;
   selectedStyle?: string;
+  specialInstructions?: string;
 }
 
 export interface Message {
@@ -71,6 +81,7 @@ export interface Order {
   mpesaCode?: string;
   createdAt: string;
   shippingMethod: string;
+  notes?: string;
 }
 
 export interface TenderInquiry {
@@ -84,4 +95,10 @@ export interface TenderInquiry {
   requirements: string;
   createdAt: string;
   status: 'New' | 'Reviewed' | 'Closed';
+}
+
+export interface SocialMediaLinks {
+  whatsapp: string;
+  facebook: string;
+  instagram: string;
 }

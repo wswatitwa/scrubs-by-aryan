@@ -1,5 +1,5 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@^2.39.7';
+import { createClient } from '@supabase/supabase-js';
 import { StaffMember } from '../types';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co';
