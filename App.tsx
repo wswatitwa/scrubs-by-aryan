@@ -30,10 +30,24 @@ const SECRET_PATH = '/BLUE-SKYWATITWA';
 const FORBIDDEN_PATHS = ['/admin', '/login', '/staff', '/backend', '/dashboard'];
 
 const App: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
-  const [shippingZones, setShippingZones] = useState<ShippingZone[]>(SHIPPING_ZONES);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
-  const [tenders, setTenders] = useState<TenderInquiry[]>(INITIAL_TENDERS);
+  // Initialize state from localStorage or constants
+  const [products, setProducts] = useState<Product[]>(() => {
+    const saved = localStorage.getItem('crubs_products');
+    return saved ? JSON.parse(saved) : PRODUCTS;
+  });
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const saved = localStorage.getItem('crubs_orders');
+    return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+  });
+  const [shippingZones, setShippingZones] = useState<ShippingZone[]>(() => {
+    const saved = localStorage.getItem('crubs_shipping_zones');
+    return saved ? JSON.parse(saved) : SHIPPING_ZONES;
+  });
+  const [tenders, setTenders] = useState<TenderInquiry[]>(() => {
+    const saved = localStorage.getItem('crubs_tenders');
+    return saved ? JSON.parse(saved) : INITIAL_TENDERS;
+  });
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -75,6 +89,12 @@ const App: React.FC = () => {
     }
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
+
+  // Persistence Effects
+  useEffect(() => { localStorage.setItem('crubs_products', JSON.stringify(products)); }, [products]);
+  useEffect(() => { localStorage.setItem('crubs_orders', JSON.stringify(orders)); }, [orders]);
+  useEffect(() => { localStorage.setItem('crubs_shipping_zones', JSON.stringify(shippingZones)); }, [shippingZones]);
+  useEffect(() => { localStorage.setItem('crubs_tenders', JSON.stringify(tenders)); }, [tenders]);
 
   const navigateToHome = () => {
     window.history.pushState({}, '', '/');
@@ -256,7 +276,8 @@ const App: React.FC = () => {
     onAddToCart: handleViewProduct,
     products: products,
     socialLinks: socialLinks,
-    onOpenTender: () => setIsTenderOpen(true)
+    onOpenTender: () => setIsTenderOpen(true),
+    onAddReview: (id: string, rev: any) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, reviews: [...(prod.reviews || []), { ...rev, id: `r-${Date.now()}`, date: new Date().toISOString() }] } : prod))
   };
 
   let content;
