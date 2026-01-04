@@ -109,33 +109,30 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, items, onRem
           </div>
 
           {items.length > 0 && (
-            <div className="border-t border-slate-50 py-8 px-6 sm:px-8 bg-slate-50/30 space-y-6">
-              <div className="space-y-3">
-                <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  <p>Logistics Subtotal</p>
-                  <p>KES {total.toLocaleString()}</p>
+            <div className="border-t border-slate-100 p-6 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] z-20">
+              <div className="flex items-center justify-between gap-6">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Total Payable</span>
+                  <span className="text-2xl font-black text-slate-900">KES {total.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  <p>Nationwide Delivery</p>
-                  <p className="text-cyan-600">Calculated Next</p>
-                </div>
-                <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
-                  <p className="text-sm font-black text-slate-900 uppercase tracking-widest">Cart Total</p>
-                  <p className="text-2xl font-black text-cyan-900">KES {total.toLocaleString()}</p>
-                </div>
-              </div>
 
-              <div className="space-y-4">
                 <button
                   onClick={onCheckout}
-                  className="w-full py-6 bg-emerald-600 text-white rounded-[2rem] font-black uppercase tracking-widest text-sm hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-3"
+                  className="flex-1 py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-xs hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 flex items-center justify-center gap-2"
                 >
-                  <i className="fa-solid fa-mobile-screen-button"></i>
-                  Pay with M-PESA
+                  <span>Pay with M-PESA</span>
+                  <i className="fa-solid fa-arrow-right"></i>
                 </button>
-                <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">
-                  <i className="fa-solid fa-shield-halved text-cyan-500 mr-1"></i>
-                  Certified Checkout • Security Grade A
+              </div>
+
+              <div className="mt-4 flex justify-between items-center">
+                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                  <i className="fa-solid fa-truck-fast text-cyan-500 mr-2"></i>
+                  Nationwide Delivery
+                </p>
+                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                  <i className="fa-solid fa-shield-halved text-emerald-500 mr-2"></i>
+                  Secure
                 </p>
               </div>
             </div>
