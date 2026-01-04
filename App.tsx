@@ -147,9 +147,23 @@ const App: React.FC = () => {
         if (fetchedOrders.length > 0) setOrders(fetchedOrders);
         if (fetchedTenders.length > 0) setTenders(fetchedTenders);
 
-        // Subscribe to real-time updates
+        // Load cached orders from local DB first (Instant Offline Access)
+        import('./lib/db').then(async ({ db }) => {
+          const cachedOrders = await db.orders.orderBy('createdAt').reverse().toArray();
+          if (cachedOrders.length > 0) {
+            setOrders(cachedOrders);
+          }
+        });
+
+        // Subscribe to real-time updates and SAVE to local
         subscription = api.subscribeToOrders((newOrder) => {
           setOrders(prev => [newOrder, ...prev]);
+
+          // Automatically archive to local DB
+          import('./lib/db').then(({ db }) => {
+            db.orders.put(newOrder);
+          });
+
           // Optional: Show notification toast
           const alertData = notifyStaffOfNewOrder(newOrder.id);
           setStaffAlert(alertData.message);

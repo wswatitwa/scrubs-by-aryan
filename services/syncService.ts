@@ -14,46 +14,60 @@ export class SyncService {
         setInterval(() => this.triggerSync(), 60000);
     }
 
+    async syncOrdersDown() {
+        if (!navigator.onLine) return;
+        try {
+            console.log('⬇️ Downloading orders from Cloud to Local Archive...');
+            const orders = await api.getOrders();
+
+            // Save to local IndexedDB (Bulk put is faster)
+            // We strip out heavy image data key if strictly needed, but text URLs are fine.
+            await db.orders.bulkPut(orders);
+            console.log(`✅ Local Archive updated with ${orders.length} orders.`);
+
+        } catch (error) {
+            console.error('Failed to sync orders down:', error);
+        }
+    }
+
     async triggerSync() {
         if (this.isSyncing || !navigator.onLine) return;
         this.isSyncing = true;
-        console.log('☁️ Starting Cloud Sync...');
+        // console.log('☁️ Starting Cloud Sync...'); // Reduce log noise
 
         try {
-            // Get all pending items
+            // 1. Sync UP (Local -> Cloud)
             const pendingItems = await db.syncQueue
                 .where('status')
                 .equals('pending')
                 .toArray();
 
-            if (pendingItems.length === 0) {
-                console.log('✅ Local Database is in sync.');
-                this.isSyncing = false;
-                return;
-            }
+            if (pendingItems.length > 0) {
+                for (const item of pendingItems) {
+                    try {
+                        await db.syncQueue.update(item.id!, { status: 'syncing' });
 
-            for (const item of pendingItems) {
-                try {
-                    // Mark as syncing to prevent double processing
-                    await db.syncQueue.update(item.id!, { status: 'syncing' });
+                        if (item.table === 'orders' && item.action === 'CREATE') {
+                            await api.createOrder(item.data);
+                        } else if (item.table === 'orders' && item.action === 'UPDATE') {
+                            // Handle Status updates etc.
+                            // We need to implement update handler map
+                        }
 
-                    // Process based on table and action
-                    if (item.table === 'orders' && item.action === 'CREATE') {
-                        await api.createOrder(item.data);
+                        await db.syncQueue.delete(item.id!);
+                        console.log(`⬆️ Synced ${item.table} #${item.data.id}`);
+                    } catch (error) {
+                        console.error(`Sync failed for item ${item.id}`, error);
+                        await db.syncQueue.update(item.id!, { status: 'pending' });
                     }
-                    // Add more handlers here (e.g. products, edits) as we expand
-
-                    // Delete from queue on success
-                    await db.syncQueue.delete(item.id!);
-                    console.log(`Successfully synced ${item.table} #${item.data.id}`);
-
-                } catch (error) {
-                    console.error(`Sync failed for item ${item.id}`, error);
-                    // Revert to pending, maybe add retry count later
-                    // For now, keep as pending to retry next time
-                    await db.syncQueue.update(item.id!, { status: 'pending' }); // Or 'failed' if fatal
                 }
             }
+
+            // 2. Sync DOWN (Cloud -> Local Archive)
+            // We run this less frequently or on demand, but here is a good place if we want "Automatic"
+            // For efficiency, maybe only do this if we haven't in a while. 
+            // For now, let's call it.
+            await this.syncOrdersDown();
 
         } catch (error) {
             console.error('Critical Sync Error:', error);
