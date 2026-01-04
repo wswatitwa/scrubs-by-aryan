@@ -106,31 +106,47 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Load Data from Supabase
+  // Load Public Data Initial
   useEffect(() => {
-    const loadData = async () => {
+    const loadPublicData = async () => {
       setLoading(true);
       try {
-        const [fetchedProducts, fetchedOrders, fetchedZones, fetchedTenders, fetchedSettings] = await Promise.all([
+        const [fetchedProducts, fetchedZones, fetchedSettings] = await Promise.all([
           api.getProducts(),
-          api.getOrders(),
           api.getShippingZones(),
-          api.getTenders(),
           api.getStoreSettings()
         ]);
 
         if (fetchedProducts.length > 0) setProducts(fetchedProducts);
-        if (fetchedOrders.length > 0) setOrders(fetchedOrders);
         if (fetchedZones.length > 0) setShippingZones(fetchedZones);
-        if (fetchedTenders.length > 0) setTenders(fetchedTenders);
         setStoreSettings(fetchedSettings);
       } catch (e) {
-        console.error("Failed to load data", e);
+        console.error("Failed to load public data", e);
       } finally {
         setLoading(false);
       }
     };
-    loadData();
+    loadPublicData();
   }, []);
+
+  // Load Admin Data when Staff Logs In
+  useEffect(() => {
+    const loadAdminData = async () => {
+      if (!currentStaff) return;
+
+      try {
+        const [fetchedOrders, fetchedTenders] = await Promise.all([
+          api.getOrders(),
+          api.getTenders()
+        ]);
+        if (fetchedOrders.length > 0) setOrders(fetchedOrders);
+        if (fetchedTenders.length > 0) setTenders(fetchedTenders);
+      } catch (e) {
+        console.error("Failed to load admin data", e);
+      }
+    };
+    loadAdminData();
+  }, [currentStaff]);
 
   const handleUpdateStock = (id: string, stock: number) => {
     const product = products.find(p => p.id === id);
