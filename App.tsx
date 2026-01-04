@@ -131,6 +131,8 @@ const App: React.FC = () => {
 
   // Load Admin Data when Staff Logs In
   useEffect(() => {
+    let subscription: any = null;
+
     const loadAdminData = async () => {
       if (!currentStaff) return;
 
@@ -141,11 +143,27 @@ const App: React.FC = () => {
         ]);
         if (fetchedOrders.length > 0) setOrders(fetchedOrders);
         if (fetchedTenders.length > 0) setTenders(fetchedTenders);
+
+        // Subscribe to real-time updates
+        subscription = api.subscribeToOrders((newOrder) => {
+          setOrders(prev => [newOrder, ...prev]);
+          // Optional: Show notification toast
+          const alertData = notifyStaffOfNewOrder(newOrder.id);
+          setStaffAlert(alertData.message);
+          setTimeout(() => setStaffAlert(null), 8000);
+        });
+
       } catch (e) {
         console.error("Failed to load admin data", e);
       }
     };
     loadAdminData();
+
+    return () => {
+      if (subscription) {
+        import('./lib/supabase').then(({ supabase }) => supabase.removeChannel(subscription));
+      }
+    };
   }, [currentStaff]);
 
   const handleUpdateStock = (id: string, stock: number) => {

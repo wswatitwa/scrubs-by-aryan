@@ -239,4 +239,33 @@ export const api = {
 
     // Note: Staff management usually requires more secure handling. 
     // For this migration, we will focus on the core commerce data.
+    // --- Realtime ---
+    subscribeToOrders(onNewOrder: (order: Order) => void): any {
+        return supabase
+            .channel('public:orders')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'orders' },
+                (payload: any) => {
+                    const o = payload.new;
+                    const newOrder: Order = {
+                        id: o.id,
+                        customerName: o.customer_name,
+                        customerPhone: o.customer_phone,
+                        location: o.location,
+                        items: o.items,
+                        subtotal: o.subtotal,
+                        shippingFee: o.shipping_fee,
+                        total: o.total,
+                        status: o.status,
+                        mpesaCode: o.mpesa_code,
+                        shippingMethod: o.shipping_method,
+                        notes: o.notes,
+                        createdAt: o.created_at
+                    };
+                    onNewOrder(newOrder);
+                }
+            )
+            .subscribe();
+    },
 };
