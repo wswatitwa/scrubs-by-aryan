@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Product, SocialMediaLinks } from './types';
+import ProductCard from './components/ProductCard';
+import { Product, SocialMediaLinks, Review } from './types';
 import Footer from './components/Footer';
 
 interface DiagnosticsPageProps {
@@ -13,11 +14,12 @@ interface DiagnosticsPageProps {
   products: Product[];
   socialLinks: SocialMediaLinks;
   onOpenTender: () => void;
+  onAddReview: (productId: string, review: Omit<Review, 'id' | 'date'>) => void;
 }
 
 type SubCategory = 'Glucometers' | 'Rapid Test Kits' | 'Lab Consumables';
 
-const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
+const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview }) => {
   const [activeTab, setActiveTab] = useState<SubCategory>('Glucometers');
 
   const categoryProducts = products.filter(p => p.category === 'Diagnostics');
@@ -60,25 +62,12 @@ const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, on
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12">
             {displayProducts.map(item => (
-              <div
+              <ProductCard
                 key={item.id}
-                onClick={() => onAddToCart(item)}
-                className="group cursor-pointer bg-white rounded-[2.5rem] md:rounded-[4rem] overflow-hidden prestige-card transition-all duration-700 hover:-translate-y-2 md:hover:-translate-y-4 hover:border-b-[8px] md:hover:border-b-[12px] hover:border-indigo-500 border-b-[8px] md:border-b-[12px] border-transparent"
-              >
-                <div className="aspect-[4/5] overflow-hidden relative">
-                  {/* Overlay for distinct look */}
-                  <div className="absolute inset-0 bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
-                  <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt={item.name} />
-                </div>
-                <div className="p-6 md:p-12 space-y-2 md:space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[9px] md:text-[10px] font-black text-indigo-600 uppercase tracking-widest">{item.model || 'Device'}</span>
-                    <span className="text-xl md:text-2xl font-black text-slate-900">KES {item.price.toLocaleString()}</span>
-                  </div>
-                  <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none">{item.name}</h3>
-                  <p className="text-slate-400 font-medium text-xs md:text-sm italic">{item.description}</p>
-                </div>
-              </div>
+                product={item}
+                onAddToCart={onAddToCart}
+                onAddReview={onAddReview}
+              />
             ))}
           </div>
 
