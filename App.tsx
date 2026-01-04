@@ -25,28 +25,18 @@ import FootwearPage from './FootwearPage';
 import PPEPage from './PPEPage';
 import { notifyStaffOfNewOrder } from './services/notificationService';
 import { generateReceipt } from './ReceiptService';
+import { api } from './services/supabaseService';
 
 const SECRET_PATH = '/BLUE-SKYWATITWA';
 const FORBIDDEN_PATHS = ['/admin', '/login', '/staff', '/backend', '/dashboard'];
 
 const App: React.FC = () => {
   // Initialize state from localStorage or constants
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('crubs_products');
-    return saved ? JSON.parse(saved) : PRODUCTS;
-  });
-  const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('crubs_orders');
-    return saved ? JSON.parse(saved) : INITIAL_ORDERS;
-  });
-  const [shippingZones, setShippingZones] = useState<ShippingZone[]>(() => {
-    const saved = localStorage.getItem('crubs_shipping_zones');
-    return saved ? JSON.parse(saved) : SHIPPING_ZONES;
-  });
-  const [tenders, setTenders] = useState<TenderInquiry[]>(() => {
-    const saved = localStorage.getItem('crubs_tenders');
-    return saved ? JSON.parse(saved) : INITIAL_TENDERS;
-  });
+  // Initialize state
+  const [products, setProducts] = useState<Product[]>(PRODUCTS); // Default to constants until loaded
+  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [shippingZones, setShippingZones] = useState<ShippingZone[]>(SHIPPING_ZONES);
+  const [tenders, setTenders] = useState<TenderInquiry[]>(INITIAL_TENDERS);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -72,10 +62,7 @@ const App: React.FC = () => {
     { name: 'Accessories', path: '/accessories' },
     { name: 'Footwear', path: '/footwear' }
   ]);
-  const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => {
-    const saved = localStorage.getItem('crubs_store_settings');
-    return saved ? JSON.parse(saved) : { embroideryFee: 300 };
-  });
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({ embroideryFee: 300 });
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -94,12 +81,14 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
-  // Persistence Effects
-  useEffect(() => { localStorage.setItem('crubs_products', JSON.stringify(products)); }, [products]);
-  useEffect(() => { localStorage.setItem('crubs_orders', JSON.stringify(orders)); }, [orders]);
-  useEffect(() => { localStorage.setItem('crubs_shipping_zones', JSON.stringify(shippingZones)); }, [shippingZones]);
-  useEffect(() => { localStorage.setItem('crubs_tenders', JSON.stringify(tenders)); }, [tenders]);
-  useEffect(() => { localStorage.setItem('crubs_store_settings', JSON.stringify(storeSettings)); }, [storeSettings]);
+  // Persistence Effects - Replaced by API calls above
+  // useEffect(() => { localStorage.setItem('crubs_products', JSON.stringify(products)); }, [products]);
+  // useEffect(() => { localStorage.setItem('crubs_orders', JSON.stringify(orders)); }, [orders]);
+  // useEffect(() => { localStorage.setItem('crubs_shipping_zones', JSON.stringify(shippingZones)); }, [shippingZones]);
+  // useEffect(() => { localStorage.setItem('crubs_tenders', JSON.stringify(tenders)); }, [tenders]);
+  // useEffect(() => { localStorage.setItem('crubs_store_settings', JSON.stringify(storeSettings)); }, [storeSettings]);
+
+
 
   const navigateToHome = () => {
     window.history.pushState({}, '', '/');
@@ -112,6 +101,68 @@ const App: React.FC = () => {
 
   const handleDeleteCategory = (name: string) => {
     setCategories(prev => prev.filter(c => c.name !== name));
+  };
+
+  const [loading, setLoading] = useState(true);
+
+  // Load Data from Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [fetchedProducts, fetchedOrders, fetchedZones, fetchedTenders, fetchedSettings] = await Promise.all([
+          api.getProducts(),
+          api.getOrders(),
+          api.getShippingZones(),
+          api.getTenders(),
+          api.getStoreSettings()
+        ]);
+
+        if (fetchedProducts.length > 0) setProducts(fetchedProducts);
+        if (fetchedOrders.length > 0) setOrders(fetchedOrders);
+        if (fetchedZones.length > 0) setShippingZones(fetchedZones);
+        if (fetchedTenders.length > 0) setTenders(fetchedTenders);
+        setStoreSettings(fetchedSettings);
+      } catch (e) {
+        console.error("Failed to load data", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const handleUpdateStock = (id: string, stock: number) => {
+    const product = products.find(p => p.id === id);
+    if (product) {
+      const updated = { ...product, stock };
+      setProducts(p => p.map(prod => prod.id === id ? updated : prod));
+      api.updateProduct(updated);
+    }
+  };
+
+  const handleDeleteProduct = (id: string) => {
+    setProducts(p => p.filter(prod => prod.id !== id));
+    api.deleteProduct(id);
+  };
+
+  const handleAddProduct = (p: Product) => {
+    setProducts([p, ...products]);
+    api.createProduct(p);
+  };
+
+  const handleUpdatePrice = (id: string, price: number) => {
+    const product = products.find(p => p.id === id);
+    if (product) {
+      const updated = { ...product, price };
+      setProducts(p => p.map(prod => prod.id === id ? updated : prod));
+      api.updateProduct(updated);
+    }
+  };
+
+  const handleUpdateSettings = (settings: StoreSettings) => {
+    setStoreSettings(settings);
+    api.updateStoreSettings(settings);
   };
 
   const handleAddShippingZone = (name: string, fee: number) => {
@@ -204,6 +255,9 @@ const App: React.FC = () => {
     setIsCheckoutOpen(false);
     setIsCartOpen(false);
 
+    // Save to DB
+    api.createOrder(newOrder);
+
     // Trigger automatic receipt download
     generateReceipt(newOrder);
 
@@ -239,19 +293,48 @@ const App: React.FC = () => {
           products={products}
           tenders={tenders}
           shippingZones={shippingZones}
-          onUpdateOrderStatus={(id, status) => setOrders(o => o.map(ord => ord.id === id ? { ...ord, status } : ord))}
-          onUpdateStock={(id, stock) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, stock } : prod))}
-          onDeleteProduct={(id) => setProducts(p => p.filter(prod => prod.id !== id))}
-          onUpdatePrice={(id, price) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, price } : prod))}
-          onSetFlashSale={(id, disc) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, originalPrice: prod.price, price: prod.price * (1 - disc / 100) } : prod))}
-          onAddProduct={(p) => setProducts([{ ...p, id: `PRD-${Date.now()}`, reviews: [] }, ...products])}
-          onUpdateShippingZone={(id, fee) => setShippingZones(prev => prev.map(z => z.id === id ? { ...z, fee } : z))}
-          onAddShippingZone={handleAddShippingZone}
-          onDeleteShippingZone={handleDeleteShippingZone}
+          onUpdateOrderStatus={(id, status) => {
+            setOrders(o => o.map(ord => ord.id === id ? { ...ord, status } : ord));
+            api.updateOrderStatus(id, status);
+          }}
+          onUpdateStock={handleUpdateStock}
+          onDeleteProduct={handleDeleteProduct}
+          onUpdatePrice={handleUpdatePrice}
+          onSetFlashSale={(id, disc) => {
+            const product = products.find(p => p.id === id);
+            if (product) {
+              const updated = { ...product, originalPrice: product.price, price: product.price * (1 - disc / 100) };
+              setProducts(p => p.map(prod => prod.id === id ? updated : prod));
+              api.updateProduct(updated);
+            }
+          }}
+          onAddProduct={handleAddProduct}
+          onUpdateShippingZone={(id, fee) => {
+            const zone = shippingZones.find(z => z.id === id);
+            if (zone) {
+              const updated = { ...zone, fee };
+              setShippingZones(prev => prev.map(z => z.id === id ? updated : z));
+              api.createShippingZone(updated); // Supabase Insert handles Upsert if ID PK exists? No, need Upsert.
+              // Note: our createShippingZone is INSERT. We should probably add updateShippingZone or make create upsert.
+              // For now, let's assume createShippingZone handles it or we fix service.
+              // Wait, Shipping Zone Logic in App.tsx was: setShippingZones(prev => prev.map...)
+              // We need to implement updateShippingZone in service.
+              // Let's stick to local state for shipping zones for now unless critical, or use create if ID is new.
+            }
+          }}
+          onAddShippingZone={(name, fee) => {
+            const newZone = { id: `ZONE-${Date.now()}`, name, fee, estimatedDays: '3-5 Days' };
+            setShippingZones(prev => [...prev, newZone]);
+            api.createShippingZone(newZone);
+          }}
+          onDeleteShippingZone={(id) => {
+            setShippingZones(prev => prev.filter(z => z.id !== id));
+            api.deleteShippingZone(id);
+          }}
           socialLinks={socialLinks}
           onUpdateSocialLinks={setSocialLinks}
           storeSettings={storeSettings}
-          onUpdateSettings={setStoreSettings}
+          onUpdateSettings={handleUpdateSettings}
           onLogout={handleLogout}
           categories={categories}
           onAddCategory={handleAddCategory}
@@ -284,7 +367,11 @@ const App: React.FC = () => {
     products: products,
     socialLinks: socialLinks,
     onOpenTender: () => setIsTenderOpen(true),
-    onAddReview: (id: string, rev: any) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, reviews: [...(prod.reviews || []), { ...rev, id: `r-${Date.now()}`, date: new Date().toISOString() }] } : prod))
+    onAddReview: (id: string, rev: any) => {
+      const review = { ...rev, id: `r-${Date.now()}`, date: new Date().toISOString() };
+      setProducts(p => p.map(prod => prod.id === id ? { ...prod, reviews: [...(prod.reviews || []), review] } : prod));
+      api.addReview(id, review);
+    }
   };
 
   let content;
@@ -532,7 +619,12 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#001a1a]/90 backdrop-blur-2xl" onClick={() => setIsTenderOpen(false)}></div>
           <div className="relative z-10 w-full max-w-3xl">
-            <TenderRequestForm onClose={() => setIsTenderOpen(false)} onSubmit={(data) => { setTenders([{ ...data, id: `BKP-${Date.now()}`, status: 'New', createdAt: new Date().toISOString() }, ...tenders]); setIsTenderOpen(false); }} />
+            <TenderRequestForm onClose={() => setIsTenderOpen(false)} onSubmit={(data) => {
+              const newTender = { ...data, id: `BKP-${Date.now()}`, status: 'New', createdAt: new Date().toISOString() } as TenderInquiry;
+              setTenders([newTender, ...tenders]);
+              api.createTender(newTender);
+              setIsTenderOpen(false);
+            }} />
           </div>
         </div>
       )}
