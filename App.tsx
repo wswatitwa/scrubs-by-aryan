@@ -540,6 +540,48 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* Floating Social Media Icons */}
+      {!currentStaff && (socialLinks.whatsapp || socialLinks.facebook || socialLinks.instagram) && (
+        <div
+          className={`fixed left-4 md:left-8 z-[88] flex flex-col gap-3 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${(!isCartOpen && cart.length > 0) ? 'bottom-28 md:bottom-32' : 'bottom-4 md:bottom-8'
+            }`}
+        >
+          {socialLinks.whatsapp && (
+            <a
+              href={`https://wa.me/${socialLinks.whatsapp.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 md:w-12 md:h-12 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 hover:-translate-y-1 transition-all duration-300 group"
+              title="Chat on WhatsApp"
+            >
+              <i className="fa-brands fa-whatsapp text-xl md:text-2xl drop-shadow-md"></i>
+            </a>
+          )}
+          {socialLinks.facebook && (
+            <a
+              href={socialLinks.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 md:w-12 md:h-12 bg-[#1877F2] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 hover:-translate-y-1 transition-all duration-300 group"
+              title="Visit Facebook Page"
+            >
+              <i className="fa-brands fa-facebook-f text-lg md:text-xl drop-shadow-md"></i>
+            </a>
+          )}
+          {socialLinks.instagram && (
+            <a
+              href={socialLinks.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-tr from-[#FFD600] via-[#FF0100] to-[#D800B9] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 hover:-translate-y-1 transition-all duration-300 group"
+              title="Follow on Instagram"
+            >
+              <i className="fa-brands fa-instagram text-lg md:text-xl drop-shadow-md"></i>
+            </a>
+          )}
+        </div>
+      )}
+
       {!isCartOpen && cart.length > 0 && !currentStaff && (
         <button
           onClick={() => setIsCartOpen(true)}
