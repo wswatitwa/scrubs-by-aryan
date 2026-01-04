@@ -29,6 +29,7 @@ export interface Product {
   includes?: string[];
   packageSize?: string;
   materials?: string[];
+  embroideryPrice?: number;
 }
 
 export interface ShippingZone {

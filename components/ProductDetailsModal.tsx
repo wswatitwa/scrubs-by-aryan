@@ -53,8 +53,9 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, isOp
 
     const handleAddToCart = () => {
         // Calculate final price including embroidery if applicable
+        const applicableEmbroideryFee = product.embroideryPrice !== undefined ? product.embroideryPrice : embroideryFee;
         const finalProductPrice = (embroideryText.trim().length > 0 && isApparel)
-            ? product.price + embroideryFee
+            ? product.price + applicableEmbroideryFee
             : product.price;
 
         const productToAdd = {
@@ -220,8 +221,8 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, isOp
                                 <div className="flex items-center gap-2">
                                     <i className="fa-solid fa-pen-nib text-cyan-500"></i>
                                     <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Custom Embroidery</span>
-                                    {embroideryFee > 0 ? (
-                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black uppercase rounded">+ KES {embroideryFee.toLocaleString()}</span>
+                                    {(product.embroideryPrice !== undefined ? product.embroideryPrice : embroideryFee) > 0 ? (
+                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black uppercase rounded">+ KES {(product.embroideryPrice !== undefined ? product.embroideryPrice : embroideryFee).toLocaleString()}</span>
                                     ) : (
                                         <span className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-[9px] font-black uppercase rounded">Optional</span>
                                     )}

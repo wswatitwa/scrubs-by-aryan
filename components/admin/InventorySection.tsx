@@ -48,7 +48,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         description: '',
         stock: '50',
         colors: '',
-        sizes: ''
+        sizes: '',
+        embroideryPrice: ''
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -97,10 +98,11 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 stock: parseInt(newProduct.stock),
                 colors: newProduct.colors ? newProduct.colors.split(',').map(c => ({ name: c.trim(), hex: '#000000' })) : [],
                 sizes: newProduct.sizes ? newProduct.sizes.split(',').map(s => s.trim()) : [],
-                isFeatured: false
+                isFeatured: false,
+                embroideryPrice: newProduct.embroideryPrice ? parseFloat(newProduct.embroideryPrice) : undefined
             });
             setShowAddModal(false);
-            setNewProduct({ name: '', category: 'Apparel', price: '', description: '', stock: '50', colors: '', sizes: '' });
+            setNewProduct({ name: '', category: 'Apparel', price: '', description: '', stock: '50', colors: '', sizes: '', embroideryPrice: '' });
             setPreviewImage(null);
             setSystemAlert({ message: 'Product Added Successfully', type: 'success' });
         } catch (err) {
@@ -183,8 +185,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                             </div>
                             <form onSubmit={handleAddProductSubmit} className="space-y-4">
                                 <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Product Title</label><input required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="e.g. Premium Medical Clogs" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} /></div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Price (KES)</label><input required type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="3500" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} /></div>
+                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Embroidery Fee (Optional)</label><input type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="Def: Global" value={newProduct.embroideryPrice} onChange={e => setNewProduct({ ...newProduct, embroideryPrice: e.target.value })} /></div>
                                     <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
                                         <select className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}>
                                             {safeCategories.length > 0 ? (
