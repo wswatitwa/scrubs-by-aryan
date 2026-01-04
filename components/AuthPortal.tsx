@@ -1,32 +1,12 @@
-
+```
 import React, { useState, useEffect } from 'react';
 import { StaffMember } from '../types';
+import { supabase } from '../lib/supabaseClient'; // Added Supabase import
 
 interface AuthPortalProps {
   onLogin: (user: StaffMember) => void;
   onCancel: () => void;
 }
-
-const DEFAULT_USERS: StaffMember[] = [
-  {
-    id: 'st-admin',
-    name: 'Super Admin',
-    email: 'hq@crubs.com',
-    role: 'admin',
-    password: 'admin', // Mock password
-    permissions: { access_orders: true, access_inventory: true, access_revenue_data: true },
-    twoFactorEnabled: false
-  },
-  {
-    id: 'st-staff',
-    name: 'Staff Processor',
-    email: 'ops@crubs.com',
-    role: 'staff',
-    password: 'staff', // Mock password
-    permissions: { access_orders: true, access_inventory: false, access_revenue_data: false },
-    twoFactorEnabled: false
-  }
-];
 
 const AuthPortal: React.FC<AuthPortalProps> = ({ onLogin, onCancel }) => {
   const [email, setEmail] = useState('');
@@ -69,8 +49,8 @@ const AuthPortal: React.FC<AuthPortalProps> = ({ onLogin, onCancel }) => {
           setPendingUser(user);
           setStep('2fa');
 
-          console.log(`%c[Security Center] 2FA Code for ${user.email}: ${code}`, "background: #059669; color: white; padding: 4px; border-radius: 4px; font-weight: bold;");
-          alert(`[MOCK SMS] Your security code is: ${code}`); // Alert for easier user testing
+          console.log(`% c[Security Center]2FA Code for ${ user.email }: ${ code } `, "background: #059669; color: white; padding: 4px; border-radius: 4px; font-weight: bold;");
+          alert(`[MOCK SMS] Your security code is: ${ code } `); // Alert for easier user testing
 
           setLoading(false);
         } else {
@@ -174,7 +154,7 @@ const AuthPortal: React.FC<AuthPortalProps> = ({ onLogin, onCancel }) => {
 
             <div className="text-center space-y-2 mb-6">
               <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-2xl font-black">
-                <i className={`fa-solid ${pendingUser?.twoFactorMethod === 'phone' ? 'fa-mobile-screen-button' : 'fa-envelope'} fa-beat`}></i>
+                <i className={`fa - solid ${ pendingUser?.twoFactorMethod === 'phone' ? 'fa-mobile-screen-button' : 'fa-envelope' } fa - beat`}></i>
               </div>
               <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide">Verification Required</h3>
               <p className="text-[10px] text-slate-400 font-bold max-w-[200px] mx-auto">
