@@ -539,6 +539,24 @@ const App: React.FC = () => {
           onAddToCart={addToCart}
         />
       )}
+
+      {!isCartOpen && cart.length > 0 && !currentStaff && (
+        <button
+          onClick={() => setIsCartOpen(true)}
+          className="fixed bottom-4 left-4 md:bottom-8 md:left-8 z-[90] flex items-center gap-4 bg-[#001a1a]/80 backdrop-blur-md border border-cyan-500/30 p-2 pr-6 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)] animate-in slide-in-from-bottom-10 hover:bg-[#001a1a] transition-all group"
+        >
+          <div className="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center text-[#001a1a] shadow-[0_0_20px_rgba(6,182,212,0.4)] group-hover:scale-110 transition-transform relative">
+            <i className="fa-solid fa-bag-shopping text-xl"></i>
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-[#001a1a]">
+              {cart.reduce((s, i) => s + i.quantity, 0)}
+            </span>
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="text-[9px] font-black uppercase text-cyan-400 tracking-widest">Total</span>
+            <span className="text-sm font-black text-white">KES {cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString()}</span>
+          </div>
+        </button>
+      )}
     </div>
   );
 };
