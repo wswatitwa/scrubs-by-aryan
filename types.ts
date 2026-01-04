@@ -107,4 +107,6 @@ export interface SocialMediaLinks {
   whatsapp: string;
   facebook: string;
   instagram: string;
+  facebookPageId?: string; // For Facebook Feed
+  instagramToken?: string; // For Instagram Feed
 }
