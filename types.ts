@@ -110,3 +110,7 @@ export interface SocialMediaLinks {
   facebookPageId?: string; // For Facebook Feed
   instagramToken?: string; // For Instagram Feed
 }
+
+export interface StoreSettings {
+  embroideryFee: number;
+}

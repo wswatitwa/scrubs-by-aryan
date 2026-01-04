@@ -7,9 +7,10 @@ interface ProductDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAddToCart: (product: Product, color?: string, size?: string, style?: string, specialInstructions?: string, quantity?: number, material?: string) => void;
+    embroideryFee: number;
 }
 
-const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, isOpen, onClose, onAddToCart }) => {
+const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, isOpen, onClose, onAddToCart, embroideryFee }) => {
     const [quantity, setQuantity] = useState(1);
     const [selectedColor, setSelectedColor] = useState<string>('');
     const [selectedSize, setSelectedSize] = useState<string>('');
@@ -51,7 +52,17 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, isOp
         (!hasMaterials || selectedMaterial);
 
     const handleAddToCart = () => {
-        onAddToCart(product, selectedColor, selectedSize, selectedStyle, embroideryText || undefined, quantity, selectedMaterial);
+        // Calculate final price including embroidery if applicable
+        const finalProductPrice = (embroideryText.trim().length > 0 && isApparel)
+            ? product.price + embroideryFee
+            : product.price;
+
+        const productToAdd = {
+            ...product,
+            price: finalProductPrice
+        };
+
+        onAddToCart(productToAdd, selectedColor, selectedSize, selectedStyle, embroideryText || undefined, quantity, selectedMaterial);
         onClose();
     };
 
@@ -209,7 +220,11 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, isOp
                                 <div className="flex items-center gap-2">
                                     <i className="fa-solid fa-pen-nib text-cyan-500"></i>
                                     <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Custom Embroidery</span>
-                                    <span className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-[9px] font-black uppercase rounded">Optional</span>
+                                    {embroideryFee > 0 ? (
+                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black uppercase rounded">+ KES {embroideryFee.toLocaleString()}</span>
+                                    ) : (
+                                        <span className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-[9px] font-black uppercase rounded">Optional</span>
+                                    )}
                                 </div>
                                 <textarea
                                     value={embroideryText}

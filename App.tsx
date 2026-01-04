@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product, CartItem, Order, OrderStatus, UserRole, TenderInquiry, Review, StaffMember, ShippingZone, SocialMediaLinks } from './types';
+import { Product, CartItem, Order, OrderStatus, UserRole, TenderInquiry, Review, StaffMember, ShippingZone, SocialMediaLinks, StoreSettings } from './types';
 import { PRODUCTS, INITIAL_ORDERS, INITIAL_TENDERS, SHIPPING_ZONES, INITIAL_SOCIAL_LINKS } from './constants';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -72,6 +72,10 @@ const App: React.FC = () => {
     { name: 'Accessories', path: '/accessories' },
     { name: 'Footwear', path: '/footwear' }
   ]);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => {
+    const saved = localStorage.getItem('crubs_store_settings');
+    return saved ? JSON.parse(saved) : { embroideryFee: 300 };
+  });
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -95,6 +99,7 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('crubs_orders', JSON.stringify(orders)); }, [orders]);
   useEffect(() => { localStorage.setItem('crubs_shipping_zones', JSON.stringify(shippingZones)); }, [shippingZones]);
   useEffect(() => { localStorage.setItem('crubs_tenders', JSON.stringify(tenders)); }, [tenders]);
+  useEffect(() => { localStorage.setItem('crubs_store_settings', JSON.stringify(storeSettings)); }, [storeSettings]);
 
   const navigateToHome = () => {
     window.history.pushState({}, '', '/');
@@ -245,6 +250,8 @@ const App: React.FC = () => {
           onDeleteShippingZone={handleDeleteShippingZone}
           socialLinks={socialLinks}
           onUpdateSocialLinks={setSocialLinks}
+          storeSettings={storeSettings}
+          onUpdateSettings={setStoreSettings}
           onLogout={handleLogout}
           categories={categories}
           onAddCategory={handleAddCategory}
@@ -537,6 +544,7 @@ const App: React.FC = () => {
           isOpen={isProductModalOpen}
           onClose={() => setIsProductModalOpen(false)}
           onAddToCart={addToCart}
+          embroideryFee={storeSettings.embroideryFee}
         />
       )}
 
