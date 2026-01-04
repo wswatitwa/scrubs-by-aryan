@@ -3,11 +3,11 @@ import { GoogleGenAI } from "@google/genai";
 import { PRODUCTS } from "../constants";
 
 // Safe initialization
-const apiKey = process.env.API_KEY || "dummy_key_for_browser_start";
+const apiKey = import.meta.env.VITE_API_KEY || "dummy_key_for_browser_start";
 const ai = new GoogleGenAI({ apiKey });
 
 export const getShoppingAdvice = async (userPrompt: string, history: { role: 'user' | 'assistant', content: string }[]) => {
-  if (apiKey === "dummy_key_for_browser_start") {
+  if (apiKey === "dummy_key_for_browser_start" || !apiKey) {
     console.warn("Gemini API Key is missing. Returning default response.");
     return "Your one-stop shop for quality medical gear is ready to assist. (AI features require an API Key)";
   }

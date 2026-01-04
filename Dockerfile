@@ -6,8 +6,8 @@ RUN npm install
 COPY . .
 
 # Accept API Key as build argument
-ARG GEMINI_API_KEY
-ENV VITE_GEMINI_API_KEY=$GEMINI_API_KEY
+ARG VITE_API_KEY
+ENV VITE_API_KEY=$VITE_API_KEY
 
 RUN npm run build
 
