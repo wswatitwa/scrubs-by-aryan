@@ -75,17 +75,39 @@ CREATE TABLE IF NOT EXISTS tenders (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. Staff Table (Simple Auth)
-CREATE TABLE IF NOT EXISTS staff (
-    id TEXT PRIMARY KEY,
+-- 6. Staff Profiles (Linked to Supabase Auth)
+-- We replace the old simple 'staff' table with one linked to auth.users
+CREATE TABLE IF NOT EXISTS staff_profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
-    role TEXT NOT NULL, -- 'admin', 'staff'
-    permissions JSONB NOT NULL, -- { access_orders: boolean, ... }
-    password TEXT, -- Note: In production, use Supabase Auth instead of this table
+    role TEXT NOT NULL DEFAULT 'staff', -- 'admin' or 'staff'
+    permissions JSONB DEFAULT '{"access_orders": true, "access_inventory": false, "access_revenue_data": false}',
     phone_number TEXT,
     last_active TIMESTAMP WITH TIME ZONE
 );
+
+-- RLS for Staff Profiles
+ALTER TABLE staff_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Admins can view all profiles, Staff can view their own
+CREATE POLICY "Admins can view all profiles" 
+    ON staff_profiles FOR SELECT 
+    USING (auth.uid() IN (SELECT id FROM staff_profiles WHERE role = 'admin'));
+
+CREATE POLICY "Users can view own profile" 
+    ON staff_profiles FOR SELECT 
+    USING (auth.uid() = id);
+
+-- Policy: Only Admins can update/insert profiles (usually done via invite function)
+CREATE POLICY "Admins can manage profiles" 
+    ON staff_profiles FOR ALL 
+    USING (auth.uid() IN (SELECT id FROM staff_profiles WHERE role = 'admin'));
+
+-- Trigger to create profile on signup? 
+-- Ideally for staff, an Admin invites them, creating the auth user and the profile.
+-- We will handle this via Supabase Edge Functions or simple client-side logic for now (less secure but fits current scope).
+
 
 -- 7. Store Settings Table (Singleton)
 CREATE TABLE IF NOT EXISTS store_settings (
