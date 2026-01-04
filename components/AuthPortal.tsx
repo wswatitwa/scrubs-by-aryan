@@ -50,8 +50,15 @@ const AuthPortal: React.FC<AuthPortalProps> = ({ onLogin, onCancel }) => {
         onLogin(staffMember);
       }
     } catch (err: any) {
-      setError(err.message || 'Invalid credentials.');
-      console.error(err);
+      console.error('Login Error:', err);
+      // Show exact error from Supabase to help User debug (e.g. "Email not confirmed")
+      if (err.message && (err.message.includes('Email') || err.message.includes('password'))) {
+        setError(err.message);
+      } else if (err.message === 'Profile not linked to user.') {
+        setError('User exists but has no Staff Profile. Contact System Admin.');
+      } else {
+        setError('Login failed: ' + (err.message || 'Unknown error'));
+      }
     } finally {
       setLoading(false);
     }
