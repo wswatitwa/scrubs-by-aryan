@@ -126,6 +126,9 @@ const App: React.FC = () => {
         setLoading(false);
       }
     };
+    // Start Sync Service
+    import('./services/syncService');
+
     loadPublicData();
   }, []);
 
@@ -258,8 +261,11 @@ const App: React.FC = () => {
 
   const handleCheckoutComplete = (name: string, phone: string, location: string, fee: number, code: string, notes?: string) => {
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    // Generate ID locally for offline capability
+    const orderId = `ORD-${Math.floor(Math.random() * 9000) + 1000}`;
+
     const newOrder: Order = {
-      id: `ORD-${Math.floor(Math.random() * 9000) + 1000}`,
+      id: orderId,
       customerName: name,
       customerPhone: phone,
       location: location,
@@ -274,7 +280,7 @@ const App: React.FC = () => {
       notes: notes
     };
 
-    // Reduce Stock
+    // Reduce Stock (Optimistic UI)
     setProducts(prevProducts => prevProducts.map(p => {
       const cartItem = cart.find(c => c.id === p.id);
       if (cartItem) {
@@ -289,8 +295,11 @@ const App: React.FC = () => {
     setIsCheckoutOpen(false);
     setIsCartOpen(false);
 
-    // Save to DB
-    api.createOrder(newOrder);
+    // Save to Local DB (Offline First Strategy)
+    // The SyncService will automatically pick this up and push to Supabase
+    import('./lib/db').then(({ saveOrderLocally }) => {
+      saveOrderLocally(newOrder, navigator.onLine);
+    });
 
     // Trigger automatic receipt download
     generateReceipt(newOrder);
