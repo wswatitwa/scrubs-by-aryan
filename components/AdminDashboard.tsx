@@ -96,6 +96,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSystemAlert(null), 3000);
   };
 
+  const handleMarkShipped = (order: Order) => {
+    // In a real app, you'd save the tracking code locally or to DB
+    // For now we just update status and close modal
+    handleUpdateStatus(order, 'Sent');
+    setSelectedOrder(null);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pt-24 pb-12">
       {systemAlert && (

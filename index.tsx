@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Home from './pages/index';
+import App from './App';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -13,7 +13,7 @@ console.log('Mounting React root...');
 try {
   root.render(
     <React.StrictMode>
-      <Home />
+      <App />
     </React.StrictMode>
   );
   console.log('React root rendered.');
