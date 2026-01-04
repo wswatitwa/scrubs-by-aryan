@@ -23,8 +23,8 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, items, onRem
         onClick={onClose}
       />
 
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md">
+      <div className="absolute inset-y-0 right-0 max-w-full flex md:pl-10">
+        <div className="w-screen md:max-w-md">
           <div className="h-full flex flex-col bg-white shadow-2xl">
             <div className="flex-1 py-8 overflow-y-auto px-6 sm:px-8 custom-scrollbar">
               <div className="flex items-start justify-between mb-10">

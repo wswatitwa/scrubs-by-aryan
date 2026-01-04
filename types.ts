@@ -28,6 +28,7 @@ export interface Product {
   material?: string;
   includes?: string[];
   packageSize?: string;
+  materials?: string[];
 }
 
 export interface ShippingZone {
@@ -42,6 +43,7 @@ export interface CartItem extends Product {
   selectedColor?: string;
   selectedSize?: string;
   selectedStyle?: string;
+  selectedMaterial?: string;
   specialInstructions?: string;
 }
 
@@ -50,7 +52,7 @@ export interface Message {
   content: string;
 }
 
-export type OrderStatus = 'Pending' | 'Paid' | 'Dispatched' | 'Delivered';
+export type OrderStatus = 'Pending' | 'Paid' | 'Dispatched' | 'Delivered' | 'Sent' | 'In Transit';
 export type UserRole = 'admin' | 'staff' | 'customer';
 
 export interface StaffPermissions {
@@ -66,6 +68,10 @@ export interface StaffMember {
   role: UserRole;
   permissions: StaffPermissions;
   lastActive?: string;
+  twoFactorEnabled?: boolean;
+  twoFactorMethod?: 'email' | 'phone';
+  phoneNumber?: string;
+  password?: string; // For mock auth
 }
 
 export interface Order {

@@ -27,7 +27,6 @@ export const PRODUCTS: Product[] = [
     description: 'Ultra-soft moisture wicking fabric with reinforced seams.',
     image: 'https://images.unsplash.com/photo-1599493356621-1969311a7692?auto=format&fit=crop&q=80&w=600',
     stock: 120,
-    styles: ['V-Neck'],
     colors: [
       { name: 'Navy', hex: '#000080' },
       { name: 'Royal Blue', hex: '#4169E1' },
@@ -37,6 +36,8 @@ export const PRODUCTS: Product[] = [
     ],
     sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'],
     isFeatured: true,
+    styles: ['V-Neck', 'Round Neck', 'Mock Wrap'],
+    materials: ['Polyester Blend', 'Cotton Stretch', 'Anti-Microbial'],
     reviews: [
       { id: 'r1', userName: 'Nurse Joy', rating: 5, comment: 'Best scrubs in Kenya! So breathable.', date: '2024-03-10', isVerified: true }
     ]
@@ -349,7 +350,8 @@ export const PRODUCTS: Product[] = [
       { name: 'Navy', hex: '#000080' },
       { name: 'Cyan', hex: '#06B6D4' }
     ],
-    sizes: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45']
+    sizes: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'],
+    materials: ['Rubber', 'EVA Foam', 'Leather']
   },
   {
     id: 'foot-clog-soft',

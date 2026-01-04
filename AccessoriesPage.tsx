@@ -1,4 +1,4 @@
-
+// Fix: Standardized to use global modal
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import { Product, SocialMediaLinks } from './types';
@@ -10,7 +10,7 @@ interface AccessoriesPageProps {
   onOpenCart: () => void;
   onOpenTracking: () => void;
   onOpenSearch: () => void;
-  onAddToCart: (product: Product, color?: string, size?: string, style?: string, instructions?: string) => void;
+  onAddToCart: (product: Product) => void;
   products: Product[];
   socialLinks: SocialMediaLinks;
   onOpenTender: () => void;
@@ -20,28 +20,9 @@ type SubCategory = 'Watches' | 'Organization' | 'Utility';
 
 const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
   const [activeTab, setActiveTab] = useState<SubCategory>('Watches');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const categoryProducts = products.filter(p => p.category === 'Accessories');
   const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
-
-  const [selColor, setSelColor] = useState<string>('');
-  const [instructions, setInstructions] = useState<string>('');
-
-  const handleOpenDetail = (product: Product) => {
-    setSelectedProduct(product);
-    setSelColor(product.colors && product.colors.length === 1 ? product.colors[0].name : '');
-    setInstructions('');
-  };
-
-  const isAddDisabled = (selectedProduct?.colors && selectedProduct.colors.length > 1 && !selColor);
-
-  const handleAddToCart = () => {
-    if (selectedProduct && !isAddDisabled) {
-      onAddToCart(selectedProduct, selColor, undefined, undefined, instructions);
-      setSelectedProduct(null);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#001a1a]">
@@ -82,7 +63,7 @@ const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, on
             {displayProducts.map(item => (
               <div
                 key={item.id}
-                onClick={() => handleOpenDetail(item)}
+                onClick={() => onAddToCart(item)}
                 className="group cursor-pointer bg-white rounded-[4rem] overflow-hidden prestige-card transition-all duration-700 hover:-translate-y-4 hover:border-b-[12px] hover:border-teal-500"
               >
                 <div className="aspect-[4/5] overflow-hidden relative">
@@ -118,93 +99,6 @@ const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, on
         onOpenTracking={onOpenTracking}
         onOpenTender={onOpenTender}
       />
-
-      {/* Product Detail Modal */}
-      {selectedProduct && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-8">
-          <div className="absolute inset-0 bg-[#001a1a]/95 backdrop-blur-3xl" onClick={() => setSelectedProduct(null)}></div>
-          <div className="relative z-10 w-full max-w-5xl bg-white rounded-[5rem] overflow-hidden shadow-[0_50px_150px_-30px_rgba(20,184,166,0.3)] flex flex-col lg:flex-row animate-in slide-in-from-bottom-20 duration-700">
-            <div className="w-full lg:w-1/2 h-[400px] lg:h-auto bg-slate-50 relative">
-              <img src={selectedProduct.image} className="w-full h-full object-cover" alt="" />
-              <div className="absolute top-10 left-10 p-4 bg-white/20 backdrop-blur-xl rounded-2xl text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
-                Nyahururu Logistics Hub • Asset {selectedProduct.id}
-              </div>
-            </div>
-
-            <div className="flex-1 p-10 sm:p-20 overflow-y-auto max-h-[80vh] lg:max-h-none custom-scrollbar">
-              <div className="flex justify-between items-start mb-12">
-                <div className="space-y-2">
-                  <span className="text-[10px] font-black text-teal-600 uppercase tracking-[0.4em]">{activeTab}</span>
-                  <h2 className="text-4xl sm:text-5xl font-black text-slate-900 uppercase tracking-tighter leading-none">{selectedProduct.name}</h2>
-                </div>
-                <button onClick={() => setSelectedProduct(null)} className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
-                  <i className="fa-solid fa-xmark text-2xl"></i>
-                </button>
-              </div>
-
-              <div className="space-y-12">
-                {/* Material Info */}
-                {selectedProduct.material && (
-                  <div className="px-6 py-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Material Composition</span>
-                    <span className="text-lg font-bold text-slate-900">{selectedProduct.material}</span>
-                  </div>
-                )}
-
-                {/* Color Swatches */}
-                {selectedProduct.colors && selectedProduct.colors.length > 1 && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Color Variant</label>
-                      <span className="text-[11px] font-black text-teal-600 uppercase">{selColor || 'Select...'}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-4">
-                      {selectedProduct.colors.map(color => (
-                        <button
-                          key={color.name}
-                          onClick={() => setSelColor(color.name)}
-                          className={`w-14 h-14 rounded-full border-4 transition-all hover:scale-110 flex items-center justify-center ${selColor === color.name ? 'border-teal-500 scale-125 shadow-xl shadow-teal-500/20' : 'border-transparent shadow-inner'}`}
-                          style={{ backgroundColor: color.hex }}
-                          title={color.name}
-                        >
-                          {selColor === color.name && <i className="fa-solid fa-check text-white text-xs drop-shadow-md"></i>}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Special Instructions */}
-                <div className="space-y-4">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Special Demands / Notes</label>
-                  <textarea
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
-                    placeholder="e.g. Please add custom engraving details or specific organization needs..."
-                    className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-black focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 outline-none transition-all resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="pt-8 flex flex-col sm:flex-row items-center gap-8">
-                  <div className="flex-1">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Fee</p>
-                    <p className="text-5xl font-black text-slate-900 tracking-tighter">KES {selectedProduct.price.toLocaleString()}</p>
-                  </div>
-                  <button
-                    disabled={isAddDisabled}
-                    onClick={handleAddToCart}
-                    className={`w-full sm:w-auto px-16 py-7 rounded-[2.5rem] font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-4 ${isAddDisabled ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-teal-500 text-[#001a1a] shadow-2xl hover:bg-teal-400 hover:scale-105 active:scale-95'}`}
-                  >
-                    <i className="fa-solid fa-cart-plus"></i>
-                    {isAddDisabled ? 'Select Options' : 'Add to Cart'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

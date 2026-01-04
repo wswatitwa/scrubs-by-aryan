@@ -1,4 +1,4 @@
-
+// Fix: Standardized to use global modal
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import { Product, SocialMediaLinks } from './types';
@@ -10,7 +10,7 @@ interface PPEPageProps {
     onOpenCart: () => void;
     onOpenTracking: () => void;
     onOpenSearch: () => void;
-    onAddToCart: (product: Product, color?: string, size?: string, style?: string, instructions?: string) => void;
+    onAddToCart: (product: Product) => void;
     products: Product[];
     socialLinks: SocialMediaLinks;
     onOpenTender: () => void;
@@ -216,32 +216,9 @@ const PPE_DATA: Record<SubCategory, PPEItem[]> = {
 
 const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
     const [activeTab, setActiveTab] = useState<SubCategory>('Respiratory');
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
     const categoryProducts = products.filter(p => p.category === 'PPE');
     const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
-
-    const [selColor, setSelColor] = useState<string>('');
-    const [selSize, setSelSize] = useState<string>('');
-    const [selStyle, setSelStyle] = useState<string>('');
-    const [instructions, setInstructions] = useState<string>('');
-
-    const handleOpenDetail = (product: Product) => {
-        setSelectedProduct(product);
-        setSelColor(product.colors && product.colors.length === 1 ? product.colors[0].name : '');
-        setSelSize('');
-        setSelStyle(product.styles?.[0] || '');
-        setInstructions('');
-    };
-
-    const isAddDisabled = (selectedProduct?.sizes && !selSize) || (selectedProduct?.colors && selectedProduct.colors.length > 1 && !selColor);
-
-    const handleAddToCart = () => {
-        if (selectedProduct && !isAddDisabled) {
-            onAddToCart(selectedProduct, selColor, selSize, selStyle, instructions);
-            setSelectedProduct(null);
-        }
-    };
 
     return (
         <div className="min-h-screen bg-[#001a1a]">
@@ -282,7 +259,7 @@ const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpen
                         {displayProducts.map(item => (
                             <div
                                 key={item.id}
-                                onClick={() => handleOpenDetail(item)}
+                                onClick={() => onAddToCart(item)}
                                 className="group cursor-pointer bg-white rounded-[4rem] overflow-hidden prestige-card transition-all duration-700 hover:-translate-y-4 hover:border-b-[12px] hover:border-blue-500"
                             >
                                 <div className="aspect-[4/5] overflow-hidden relative">
@@ -319,124 +296,6 @@ const PPEPage: React.FC<PPEPageProps> = ({ onBack, cartCount, onOpenCart, onOpen
                 onOpenTracking={onOpenTracking}
                 onOpenTender={onOpenTender}
             />
-
-            {/* Product Detail Modal */}
-            {selectedProduct && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-8">
-                    <div className="absolute inset-0 bg-[#001a1a]/95 backdrop-blur-3xl" onClick={() => setSelectedProduct(null)}></div>
-                    <div className="relative z-10 w-full max-w-5xl bg-white rounded-[5rem] overflow-hidden shadow-[0_50px_150px_-30px_rgba(59,130,246,0.3)] flex flex-col lg:flex-row animate-in slide-in-from-bottom-20 duration-700">
-                        <div className="w-full lg:w-1/2 h-[400px] lg:h-auto bg-slate-50 relative">
-                            <img src={selectedProduct.image} className="w-full h-full object-cover" alt="" />
-                            <div className="absolute top-10 left-10 p-4 bg-white/20 backdrop-blur-xl rounded-2xl text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
-                                Nyahururu Logistics Hub • Asset {selectedProduct.id}
-                            </div>
-                        </div>
-
-                        <div className="flex-1 p-10 sm:p-20 overflow-y-auto max-h-[80vh] lg:max-h-none custom-scrollbar">
-                            <div className="flex justify-between items-start mb-12">
-                                <div className="space-y-2">
-                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em]">{activeTab}</span>
-                                    <h2 className="text-4xl sm:text-5xl font-black text-slate-900 uppercase tracking-tighter leading-none">{selectedProduct.name}</h2>
-                                </div>
-                                <button onClick={() => setSelectedProduct(null)} className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
-                                    <i className="fa-solid fa-xmark text-2xl"></i>
-                                </button>
-                            </div>
-
-                            <div className="space-y-12">
-                                {/* Style Selection */}
-                                {selectedProduct.styles && selectedProduct.styles.length > 1 && (
-                                    <div className="space-y-4">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Select Variant</label>
-                                        <div className="flex flex-wrap gap-3">
-                                            {selectedProduct.styles.map(style => (
-                                                <button
-                                                    key={style}
-                                                    onClick={() => setSelStyle(style)}
-                                                    className={`px-8 py-3 rounded-xl text-[11px] font-bold uppercase transition-all ${selStyle === style ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                                >
-                                                    {style}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Color Swatches - only if more than 1 */}
-                                {selectedProduct.colors && selectedProduct.colors.length > 1 && (
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Color</label>
-                                            <span className="text-[11px] font-black text-blue-600 uppercase">{selColor || 'Select...'}</span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-4">
-                                            {selectedProduct.colors.map(color => (
-                                                <button
-                                                    key={color.name}
-                                                    onClick={() => setSelColor(color.name)}
-                                                    className={`w-14 h-14 rounded-full border-4 transition-all hover:scale-110 flex items-center justify-center ${selColor === color.name ? 'border-blue-500 scale-125 shadow-xl shadow-blue-500/20' : 'border-transparent shadow-inner'}`}
-                                                    style={{ backgroundColor: color.hex }}
-                                                    title={color.name}
-                                                >
-                                                    {selColor === color.name && <i className="fa-solid fa-check text-white text-xs drop-shadow-md"></i>}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Size Grid */}
-                                {selectedProduct.sizes && (
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Size</label>
-                                            <span className="text-[11px] font-black text-blue-600 uppercase">{selSize || 'Select...'}</span>
-                                        </div>
-                                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                                            {selectedProduct.sizes.map(size => (
-                                                <button
-                                                    key={size}
-                                                    onClick={() => setSelSize(size)}
-                                                    className={`py-5 rounded-2xl text-[12px] font-black transition-all ${selSize === size ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-100'}`}
-                                                >
-                                                    {size}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Special Instructions */}
-                                <div className="space-y-4">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Special Demands / Notes</label>
-                                    <textarea
-                                        value={instructions}
-                                        onChange={(e) => setInstructions(e.target.value)}
-                                        placeholder="e.g. Please check availability of specific shades or add site-delivery instructions..."
-                                        className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all resize-none"
-                                        rows={3}
-                                    />
-                                </div>
-
-                                <div className="pt-8 flex flex-col sm:flex-row items-center gap-8">
-                                    <div className="flex-1">
-                                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Fee</p>
-                                        <p className="text-5xl font-black text-slate-900 tracking-tighter">KES {selectedProduct.price.toLocaleString()}</p>
-                                    </div>
-                                    <button
-                                        disabled={isAddDisabled}
-                                        onClick={handleAddToCart}
-                                        className={`w-full sm:w-auto px-16 py-7 rounded-[2.5rem] font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-4 ${isAddDisabled ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-blue-500 text-white shadow-2xl hover:bg-blue-400 hover:scale-105 active:scale-95'}`}
-                                    >
-                                        <i className="fa-solid fa-cart-plus"></i>
-                                        {isAddDisabled ? 'Select Options' : 'Add to Cart'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

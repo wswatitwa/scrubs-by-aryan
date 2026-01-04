@@ -6,8 +6,10 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ProductCard from './components/ProductCard';
 import CartSidebar from './components/CartSidebar';
+import MobileMenu from './components/MobileMenu';
 import AiAssistant from './components/AiAssistant';
 import AdminDashboard from './components/AdminDashboard';
+import ProductDetailsModal from './components/ProductDetailsModal'; // Imported
 import MpesaPayment from './components/MpesaPayment';
 import OrderTracking from './components/OrderTracking';
 import TenderRequestForm from './components/TenderRequestForm';
@@ -40,12 +42,22 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [trackingId, setTrackingId] = useState('');
   const [isTenderOpen, setIsTenderOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [currentStaff, setCurrentStaff] = useState<StaffMember | null>(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [staffAlert, setStaffAlert] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [socialLinks, setSocialLinks] = useState<SocialMediaLinks>(INITIAL_SOCIAL_LINKS);
+  const [categories, setCategories] = useState<{ name: string, path: string }[]>([
+    { name: 'Apparel', path: '/apparel' },
+    { name: 'PPE', path: '/ppe' },
+    { name: 'Equipment', path: '/equipment' },
+    { name: 'Diagnostics', path: '/diagnostics' },
+    { name: 'Accessories', path: '/accessories' },
+    { name: 'Footwear', path: '/footwear' }
+  ]);
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -69,12 +81,30 @@ const App: React.FC = () => {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
-  const addToCart = (product: Product, selectedColor?: string, selectedSize?: string, selectedStyle?: string, specialInstructions?: string) => {
+  const handleAddCategory = (name: string) => {
+    setCategories(prev => [...prev, { name, path: `/${name.toLowerCase().replace(/\s+/g, '-')}` }]);
+  };
+
+  const handleDeleteCategory = (name: string) => {
+    setCategories(prev => prev.filter(c => c.name !== name));
+  };
+
+  const handleAddShippingZone = (name: string, fee: number) => {
+    setShippingZones(prev => [...prev, { id: `ZONE-${Date.now()}`, name, fee, estimatedDays: '3-5 Days' }]);
+  };
+
+  const handleDeleteShippingZone = (id: string) => {
+    setShippingZones(prev => prev.filter(z => z.id !== id));
+  };
+
+  const addToCart = (product: Product, selectedColor?: string, selectedSize?: string, selectedStyle?: string, specialInstructions?: string, quantity: number = 1, selectedMaterial?: string) => {
     setCart(prev => {
       const existing = prev.find(item =>
         item.id === product.id &&
         item.selectedColor === selectedColor &&
         item.selectedSize === selectedSize &&
+        item.selectedStyle === selectedStyle &&
+        item.selectedMaterial === selectedMaterial &&
         item.specialInstructions === specialInstructions
       );
 
@@ -83,14 +113,22 @@ const App: React.FC = () => {
           (item.id === product.id &&
             item.selectedColor === selectedColor &&
             item.selectedSize === selectedSize &&
+            item.selectedStyle === selectedStyle &&
+            item.selectedMaterial === selectedMaterial &&
             item.specialInstructions === specialInstructions)
-            ? { ...item, quantity: item.quantity + 1 } : item
+            ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
-      return [...prev, { ...product, quantity: 1, selectedColor, selectedSize, selectedStyle, specialInstructions }];
+      return [...prev, { ...product, quantity: quantity, selectedColor, selectedSize, selectedStyle, selectedMaterial, specialInstructions }];
     });
     setIsCartOpen(true);
   };
+
+  const handleViewProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  };
+
 
   const removeFromCart = (id: string, color?: string, size?: string) => {
     setCart(prev => prev.filter(item =>
@@ -125,6 +163,16 @@ const App: React.FC = () => {
       shippingMethod: 'Nationwide Express Hub',
       notes: notes
     };
+
+    // Reduce Stock
+    setProducts(prevProducts => prevProducts.map(p => {
+      const cartItem = cart.find(c => c.id === p.id);
+      if (cartItem) {
+        return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) };
+      }
+      return p;
+    }));
+
     setOrders([newOrder, ...orders]);
     setLastOrder(newOrder);
     setCart([]);
@@ -139,20 +187,10 @@ const App: React.FC = () => {
     setTimeout(() => setStaffAlert(null), 8000);
   };
 
-  const handleStaffLogin = (role: UserRole) => {
-    const mockStaff: StaffMember = {
-      id: role === 'admin' ? 'st-admin' : 'st-staff',
-      name: role === 'admin' ? 'Super Admin' : 'Staff Processor',
-      email: role === 'admin' ? 'hq@crubs.com' : 'ops@crubs.com',
-      role: role,
-      permissions: {
-        access_orders: true,
-        access_inventory: role === 'admin',
-        access_revenue_data: role === 'admin'
-      }
-    };
-    localStorage.setItem('crubs_staff_session', JSON.stringify(mockStaff));
-    setCurrentStaff(mockStaff);
+  const handleStaffLogin = (user: StaffMember) => {
+    // Persist session
+    localStorage.setItem('crubs_staff_session', JSON.stringify(user));
+    setCurrentStaff(user);
     window.history.replaceState({}, '', '/');
     setCurrentPath('/');
   };
@@ -169,7 +207,7 @@ const App: React.FC = () => {
   if (currentStaff) {
     return (
       <div className="min-h-screen bg-[#001a1a]">
-        <Navbar cartCount={0} onOpenCart={() => { }} onOpenTracking={() => { }} onOpenSearch={() => { }} isAdmin={true} />
+        <Navbar cartCount={0} onOpenCart={() => { }} onOpenTracking={() => { }} onOpenSearch={() => { }} isAdmin={true} categories={categories} />
         <AdminDashboard
           currentUser={currentStaff}
           orders={orders}
@@ -183,9 +221,27 @@ const App: React.FC = () => {
           onSetFlashSale={(id, disc) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, originalPrice: prod.price, price: prod.price * (1 - disc / 100) } : prod))}
           onAddProduct={(p) => setProducts([{ ...p, id: `PRD-${Date.now()}`, reviews: [] }, ...products])}
           onUpdateShippingZone={(id, fee) => setShippingZones(prev => prev.map(z => z.id === id ? { ...z, fee } : z))}
+          onAddShippingZone={handleAddShippingZone}
+          onDeleteShippingZone={handleDeleteShippingZone}
           socialLinks={socialLinks}
           onUpdateSocialLinks={setSocialLinks}
           onLogout={handleLogout}
+          categories={categories}
+          onAddCategory={handleAddCategory}
+          onDeleteCategory={handleDeleteCategory}
+          onUpdateStaff={(updated) => {
+            // Mock persistence
+            if (currentStaff?.id === updated.id) {
+              setCurrentStaff(updated);
+              localStorage.setItem('crubs_staff_session', JSON.stringify(updated));
+            }
+            // In a real app, this would make an API call
+          }}
+          onDeleteStaff={(id) => {
+            if (currentStaff?.id === id) {
+              handleLogout();
+            }
+          }}
         />
       </div>
     );
@@ -197,24 +253,111 @@ const App: React.FC = () => {
     onOpenCart: () => setIsCartOpen(true),
     onOpenTracking: () => setIsTrackingOpen(true),
     onOpenSearch: () => setIsSearchOpen(true),
-    onAddToCart: addToCart,
+    onAddToCart: handleViewProduct,
     products: products,
     socialLinks: socialLinks,
     onOpenTender: () => setIsTenderOpen(true)
   };
 
-  if (currentPath === '/apparel') return <ApparelPage {...commonPageProps} />;
-  if (currentPath === '/equipment') return <EquipmentPage {...commonPageProps} />;
-  if (currentPath === '/diagnostics') return <DiagnosticsPage {...commonPageProps} />;
-  if (currentPath === '/accessories') return <AccessoriesPage {...commonPageProps} />;
-  if (currentPath === '/footwear') return <FootwearPage {...commonPageProps} />;
-  if (currentPath === '/ppe') return <PPEPage {...commonPageProps} />;
+  let content;
+  if (currentPath === '/apparel') {
+    content = <ApparelPage {...commonPageProps} />;
+  } else if (currentPath === '/equipment') {
+    content = <EquipmentPage {...commonPageProps} />;
+  } else if (currentPath === '/diagnostics') {
+    content = <DiagnosticsPage {...commonPageProps} />;
+  } else if (currentPath === '/accessories') {
+    content = <AccessoriesPage {...commonPageProps} />;
+  } else if (currentPath === '/footwear') {
+    content = <FootwearPage {...commonPageProps} />;
+  } else if (currentPath === '/ppe') {
+    content = <PPEPage {...commonPageProps} />;
+  } else {
+    // Default Home Page Content
+    const filteredProducts = products.filter(p => {
+      const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
+      const matchesSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
 
-  const filteredProducts = products.filter(p => {
-    const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
-    const matchesSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+    content = (
+      <>
+        <Navbar
+          cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenTracking={() => setIsTrackingOpen(true)}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          isAdmin={false}
+          categories={categories}
+        />
+
+        <main>
+          <FlashSaleBanner isActive={products.some(p => p.originalPrice)} />
+          <Hero />
+
+          <section id="products" className="py-40 relative bg-[#001a1a]">
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent"></div>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col md:flex-row justify-between items-end gap-16 mb-28">
+                <div className="space-y-6 text-center md:text-left">
+                  <h2 className="text-4xl sm:text-7xl font-black text-white tracking-tighter uppercase leading-none">
+                    THE <span className="text-cyan-400">CLINICAL FEED.</span>
+                  </h2>
+                  <p className="text-white/60 max-w-xl font-medium tracking-wide text-lg">Equipping healthcare professionals nationwide with the finest clinical gear.</p>
+                </div>
+
+                <div className="flex items-center gap-3 bg-white/5 p-3 rounded-[3rem] border border-white/10 shadow-2xl overflow-x-auto max-w-full">
+                  {/* Navigation Buttons for Categories */}
+                  {categories.map(cat => (
+                    <button
+                      key={cat.name}
+                      onClick={() => {
+                        window.history.pushState({}, '', cat.path);
+                        window.dispatchEvent(new PopStateEvent('popstate'));
+                      }}
+                      className="px-12 py-5 rounded-[2rem] text-[12px] font-black uppercase tracking-[0.3em] transition-all whitespace-nowrap text-white/40 hover:text-white hover:bg-white/5"
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filteredProducts.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
+                  {filteredProducts.map(product => (
+                    <ProductCard key={product.id} product={product} onAddToCart={handleViewProduct} onAddReview={(id, rev) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, reviews: [...(prod.reviews || []), { ...rev, id: `r-${Date.now()}`, date: new Date().toISOString() }] } : prod))} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-32 space-y-8 bg-white/5 rounded-[4rem] border border-white/5">
+                  <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto">
+                    <i className="fa-solid fa-magnifying-glass text-4xl text-white/20"></i>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter">No Assets Found</h3>
+                    <p className="text-white/40 font-medium">Try adjusting your search or category filters.</p>
+                  </div>
+                  <button
+                    onClick={() => { setSearchQuery(''); setActiveCategory('All'); }}
+                    className="px-12 py-4 bg-cyan-500/10 text-cyan-400 rounded-full border border-cyan-500/20 font-black uppercase tracking-widest text-[10px] hover:bg-cyan-500 hover:text-[#001a1a] transition-all"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        </main>
+        <Footer
+          socialLinks={socialLinks}
+          onOpenTracking={() => setIsTrackingOpen(true)}
+          onOpenTender={() => setIsTenderOpen(true)}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#001a1a]">
@@ -231,86 +374,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <Navbar
-        cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenTracking={() => setIsTrackingOpen(true)}
-        onOpenSearch={() => setIsSearchOpen(true)}
-        isAdmin={false}
-      />
-
-      <main>
-        <FlashSaleBanner isActive={products.some(p => p.originalPrice)} />
-        <Hero />
-
-        <section id="products" className="py-40 relative bg-[#001a1a]">
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent"></div>
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-16 mb-28">
-              <div className="space-y-6 text-center md:text-left">
-                <h2 className="text-4xl sm:text-7xl font-black text-white tracking-tighter uppercase leading-none">
-                  THE <span className="text-cyan-400">CLINICAL FEED.</span>
-                </h2>
-                <p className="text-white/60 max-w-xl font-medium tracking-wide text-lg">Equipping healthcare professionals nationwide with the finest clinical gear.</p>
-              </div>
-
-              <div className="flex items-center gap-3 bg-white/5 p-3 rounded-[3rem] border border-white/10 shadow-2xl overflow-x-auto max-w-full">
-                {/* Navigation Buttons for Categories */}
-                {[
-                  { name: 'Apparel', path: '/apparel' },
-                  { name: 'PPE', path: '/ppe' },
-                  { name: 'Equipment', path: '/equipment' },
-                  { name: 'Diagnostics', path: '/diagnostics' },
-                  { name: 'Accessories', path: '/accessories' },
-                  { name: 'Footwear', path: '/footwear' }
-                ].map(cat => (
-                  <button
-                    key={cat.name}
-                    onClick={() => {
-                      window.history.pushState({}, '', cat.path);
-                      window.dispatchEvent(new PopStateEvent('popstate'));
-                    }}
-                    className="px-12 py-5 rounded-[2rem] text-[12px] font-black uppercase tracking-[0.3em] transition-all whitespace-nowrap text-white/40 hover:text-white hover:bg-white/5"
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
-                {filteredProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onAddToCart={(p) => addToCart(p)} onAddReview={(id, rev) => setProducts(p => p.map(prod => prod.id === id ? { ...prod, reviews: [...(prod.reviews || []), { ...rev, id: `r-${Date.now()}`, date: new Date().toISOString() }] } : prod))} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-32 space-y-8 bg-white/5 rounded-[4rem] border border-white/5">
-                <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto">
-                  <i className="fa-solid fa-magnifying-glass text-4xl text-white/20"></i>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-3xl font-black text-white uppercase tracking-tighter">No Assets Found</h3>
-                  <p className="text-white/40 font-medium">Try adjusting your search or category filters.</p>
-                </div>
-                <button
-                  onClick={() => { setSearchQuery(''); setActiveCategory('All'); }}
-                  className="px-12 py-4 bg-cyan-500/10 text-cyan-400 rounded-full border border-cyan-500/20 font-black uppercase tracking-widest text-[10px] hover:bg-cyan-500 hover:text-[#001a1a] transition-all"
-                >
-                  Clear All Filters
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
-
-      <Footer
-        socialLinks={socialLinks}
-        onOpenTracking={() => setIsTrackingOpen(true)}
-        onOpenTender={() => setIsTenderOpen(true)}
-      />
+      {content}
 
       <CartSidebar
         isOpen={isCartOpen}
@@ -446,6 +510,14 @@ const App: React.FC = () => {
       )}
 
       <AiAssistant />
+      {!currentStaff && (
+        <ProductDetailsModal
+          product={selectedProduct}
+          isOpen={isProductModalOpen}
+          onClose={() => setIsProductModalOpen(false)}
+          onAddToCart={addToCart}
+        />
+      )}
     </div>
   );
 };

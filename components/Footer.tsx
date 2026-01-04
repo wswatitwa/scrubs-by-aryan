@@ -8,7 +8,9 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ socialLinks, onOpenTracking, onOpenTender }) => {
-    const whatsappUrl = `https://wa.me/${socialLinks.whatsapp.replace(/[^0-9]/g, '')}`;
+    // Defensive coding: Ensure socialLinks and whatsapp exist before accessing/replacing
+    const whatsappNumber = socialLinks?.whatsapp || '';
+    const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`;
 
     return (
         <footer className="bg-[#001515] py-32 border-t border-white/5">
@@ -34,7 +36,7 @@ const Footer: React.FC<FooterProps> = ({ socialLinks, onOpenTracking, onOpenTend
                 </div>
 
                 <div className="flex gap-8 items-center">
-                    {socialLinks.whatsapp && (
+                    {socialLinks?.whatsapp && (
                         <a
                             href={whatsappUrl}
                             target="_blank"
@@ -45,7 +47,7 @@ const Footer: React.FC<FooterProps> = ({ socialLinks, onOpenTracking, onOpenTend
                             <i className="fa-brands fa-whatsapp text-xl"></i>
                         </a>
                     )}
-                    {socialLinks.facebook && (
+                    {socialLinks?.facebook && (
                         <a
                             href={socialLinks.facebook}
                             target="_blank"
@@ -56,7 +58,7 @@ const Footer: React.FC<FooterProps> = ({ socialLinks, onOpenTracking, onOpenTend
                             <i className="fa-brands fa-facebook-f text-xl"></i>
                         </a>
                     )}
-                    {socialLinks.instagram && (
+                    {socialLinks?.instagram && (
                         <a
                             href={socialLinks.instagram}
                             target="_blank"

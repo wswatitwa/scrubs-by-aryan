@@ -27,32 +27,32 @@ const AiAssistant: React.FC = () => {
     setIsTyping(true);
 
     const advice = await getShoppingAdvice(input, messages);
-    
+
     setIsTyping(false);
     setMessages(prev => [...prev, { role: 'assistant', content: advice }]);
   };
 
   return (
     <>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-teal-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-teal-700 transition-all transform hover:scale-110 active:scale-95 group"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 w-14 h-14 md:w-16 md:h-16 bg-teal-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-teal-700 transition-all transform hover:scale-110 active:scale-95 group"
       >
         {isOpen ? (
-          <i className="fa-solid fa-xmark text-2xl"></i>
+          <i className="fa-solid fa-xmark text-xl md:text-2xl"></i>
         ) : (
           <div className="relative">
-            <i className="fa-solid fa-user-nurse text-2xl group-hover:animate-pulse"></i>
-            <span className="absolute -top-1 -right-1 flex h-4 w-4">
+            <i className="fa-solid fa-user-nurse text-xl md:text-2xl group-hover:animate-pulse"></i>
+            <span className="absolute -top-1 -right-1 flex h-3 w-3 md:h-4 md:w-4">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-teal-300"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 md:h-4 md:w-4 bg-teal-300"></span>
             </span>
           </div>
         )}
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-h-[600px] h-[75vh] bg-white rounded-3xl shadow-[0_32px_128px_-32px_rgba(0,0,0,0.3)] border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
+        <div className="fixed bottom-20 right-4 md:bottom-24 md:right-6 z-50 w-[calc(100vw-2rem)] md:w-[380px] max-h-[600px] h-[70vh] md:h-[75vh] bg-white rounded-3xl shadow-[0_32px_128px_-32px_rgba(0,0,0,0.3)] border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
           <div className="bg-slate-900 p-5 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center shadow-inner">
               <i className="fa-solid fa-stethoscope text-white text-lg"></i>
@@ -63,21 +63,20 @@ const AiAssistant: React.FC = () => {
             </div>
           </div>
 
-          <div 
+          <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-5 space-y-6 bg-slate-50/50"
           >
             {messages.map((msg, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div 
-                  className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                    msg.role === 'user' 
-                      ? 'bg-teal-600 text-white rounded-tr-none' 
-                      : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
-                  }`}
+                <div
+                  className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
+                    ? 'bg-teal-600 text-white rounded-tr-none'
+                    : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
+                    }`}
                 >
                   {msg.content}
                 </div>
@@ -96,15 +95,15 @@ const AiAssistant: React.FC = () => {
 
           <div className="p-5 border-t border-slate-100 bg-white">
             <div className="relative">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Ask about scrubs, sizing, or bulk orders..."
                 className="w-full pl-5 pr-14 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-black focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all placeholder:text-slate-400"
               />
-              <button 
+              <button
                 onClick={handleSend}
                 disabled={!input.trim()}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-teal-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"

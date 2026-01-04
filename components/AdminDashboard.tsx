@@ -1,9 +1,12 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Order, Product, OrderStatus, UserRole, TenderInquiry, StaffMember, StaffPermissions, ShippingZone, SocialMediaLinks } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Order, Product, OrderStatus, TenderInquiry, StaffMember, StaffPermissions, ShippingZone, SocialMediaLinks } from '../types';
 import { notifyCustomerOfShipping } from '../services/notificationService';
-import { fetchStaffList, uploadProductImage } from '../lib/supabase';
+import { fetchStaffList } from '../lib/supabase';
 import StaffManagement from './StaffManagement';
+import OrderManifestModal from './admin/OrderManifestModal';
+import InventorySection from './admin/InventorySection';
+import ShippingSection from './admin/ShippingSection';
+import SocialSection from './admin/SocialSection';
 
 interface AdminDashboardProps {
   currentUser: StaffMember;
@@ -18,9 +21,16 @@ interface AdminDashboardProps {
   onSetFlashSale: (productId: string, discount: number) => void;
   onAddProduct: (product: Omit<Product, 'id'>) => void;
   onUpdateShippingZone: (zoneId: string, fee: number) => void;
+  onAddShippingZone: (name: string, fee: number) => void;
+  onDeleteShippingZone: (id: string) => void;
   socialLinks: SocialMediaLinks;
   onUpdateSocialLinks: (links: SocialMediaLinks) => void;
   onLogout: () => void;
+  categories: { name: string; path: string }[];
+  onAddCategory: (name: string) => void;
+  onDeleteCategory: (name: string) => void;
+  onUpdateStaff: (updatedStaff: StaffMember) => void;
+  onDeleteStaff: (staffId: string) => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -37,25 +47,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onSetFlashSale,
   onAddProduct,
   onUpdateShippingZone,
+  onAddShippingZone,
+  onDeleteShippingZone,
   onUpdateSocialLinks,
-  onLogout
+  onLogout,
+  categories,
+  onAddCategory,
+  onDeleteCategory,
+  onUpdateStaff,
+  onDeleteStaff
 }) => {
+  // ... existing state initialization ...
   const [activeTab, setActiveTab] = useState<'orders' | 'inventory' | 'analytics' | 'staff' | 'shipping' | 'social'>('orders');
+  const [orderFilter, setOrderFilter] = useState<'All' | 'Pending' | 'Sent' | 'In Transit' | 'Delivered'>('All');
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [systemAlert, setSystemAlert] = useState<{ message: string, type: string } | null>(null);
-
-  const [socialEdit, setSocialEdit] = useState<SocialMediaLinks>(socialLinks);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [newProduct, setNewProduct] = useState({
-    name: '',
-    category: 'Apparel',
-    price: '',
-    description: '',
-    stock: '50'
-  });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const isAdmin = currentUser.role === 'admin';
 
@@ -65,59 +72,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   }, [isAdmin]);
 
-  const handleMarkShipped = (order: Order) => {
+  const handleUpdateStatus = (order: Order, newStatus: OrderStatus) => {
     if (!currentUser.permissions.access_orders) return;
-    onUpdateOrderStatus(order.id, 'Dispatched');
-    const notification = notifyCustomerOfShipping(order.customerPhone, order.id);
-    setSystemAlert({ message: notification.message, type: 'sms' });
-    setTimeout(() => setSystemAlert(null), 5000);
+    onUpdateOrderStatus(order.id, newStatus);
+
+    let message = `Order #${order.id} Updated`;
+    if (newStatus === 'Sent') message = `Order dispatched to courier`;
+    if (newStatus === 'In Transit') message = `Order marked as in transit`;
+    if (newStatus === 'Delivered') message = `Order successfully delivered`;
+
+    if (newStatus === 'Sent') {
+      notifyCustomerOfShipping(order.customerPhone, order.id);
+    }
+
+    setSystemAlert({ message, type: 'system' });
+    setTimeout(() => setSystemAlert(null), 3000);
   };
+
 
   const updatePermissions = (staffId: string, permissions: StaffPermissions) => {
     setStaffList(prev => prev.map(s => s.id === staffId ? { ...s, permissions } : s));
     setSystemAlert({ message: 'Privileges Updated', type: 'system' });
     setTimeout(() => setSystemAlert(null), 3000);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewImage(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) {
-      setSystemAlert({ message: 'Image File Required', type: 'error' });
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const imageUrl = await uploadProductImage(file);
-      onAddProduct({
-        name: newProduct.name,
-        category: newProduct.category,
-        price: parseFloat(newProduct.price),
-        description: newProduct.description,
-        image: imageUrl,
-        stock: parseInt(newProduct.stock),
-        isFeatured: false
-      });
-      setShowAddModal(false);
-      setNewProduct({ name: '', category: 'Apparel', price: '', description: '', stock: '50' });
-      setPreviewImage(null);
-      setSystemAlert({ message: 'Product Added Successfully', type: 'success' });
-    } catch (err) {
-      setSystemAlert({ message: 'Upload Failed', type: 'error' });
-    } finally {
-      setUploading(false);
-      setTimeout(() => setSystemAlert(null), 3000);
-    }
   };
 
   return (
@@ -162,38 +138,85 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
           {activeTab === 'orders' && (
             currentUser.permissions.access_orders ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Reference</th>
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Customer</th>
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Shipping (KES)</th>
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Total (KES)</th>
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {orders.map(order => (
-                      <tr key={order.id}>
-                        <td className="px-8 py-6 font-black text-blue-900">{order.id}</td>
-                        <td className="px-8 py-6">
-                          <span className="font-bold text-slate-800 block text-sm">{order.customerName}</span>
-                          <span className="text-[10px] text-blue-600 font-bold uppercase">{order.location}</span>
-                        </td>
-                        <td className="px-8 py-6 font-bold text-slate-500">{order.shippingFee.toLocaleString()}</td>
-                        <td className="px-8 py-6 font-black text-slate-900">{order.total.toLocaleString()}</td>
-                        <td className="px-8 py-6">
-                          {order.status === 'Paid' && (
-                            <button onClick={() => handleMarkShipped(order)} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all">
-                              Ship Order
-                            </button>
-                          )}
-                        </td>
+              <div className="flex flex-col h-full">
+                {/* Order Sub-Navigation */}
+                <div className="flex border-b border-slate-100 px-8">
+                  {['All', 'Pending', 'Sent', 'In Transit', 'Delivered'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => setOrderFilter(status as any)}
+                      className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all ${orderFilter === status ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="overflow-x-auto flex-1">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-50 border-b border-slate-100">
+                      <tr>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Reference</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Customer</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Shipping (KES)</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Total (KES)</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {orders.filter(o => {
+                        if (orderFilter === 'All') return true;
+                        if (orderFilter === 'Pending') return o.status === 'Pending' || o.status === 'Paid';
+                        return o.status === orderFilter;
+                      }).map(order => (
+                        <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-8 py-6 font-black text-blue-900">{order.id}</td>
+                          <td className="px-8 py-6">
+                            <span className="font-bold text-slate-800 block text-sm">{order.customerName}</span>
+                            <span className="text-[10px] text-blue-600 font-bold uppercase">{order.location}</span>
+                          </td>
+                          <td className="px-8 py-6 font-bold text-slate-500">{order.shippingFee.toLocaleString()}</td>
+                          <td className="px-8 py-6 font-black text-slate-900">{order.total.toLocaleString()}</td>
+                          <td className="px-8 py-6">
+                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                              order.status === 'In Transit' ? 'bg-amber-100 text-amber-700' :
+                                order.status === 'Sent' ? 'bg-blue-100 text-blue-700' :
+                                  'bg-slate-100 text-slate-600'
+                              }`}>
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6">
+                            <div className="flex gap-2">
+                              <button onClick={() => setSelectedOrder(order)} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
+                                View
+                              </button>
+
+                              {(order.status === 'Paid' || order.status === 'Pending') && (
+                                <button onClick={() => handleUpdateStatus(order, 'Sent')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all">
+                                  Mark Sent
+                                </button>
+                              )}
+
+                              {order.status === 'Sent' && (
+                                <button onClick={() => handleUpdateStatus(order, 'In Transit')} className="px-4 py-2 bg-amber-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all">
+                                  In Transit
+                                </button>
+                              )}
+
+                              {order.status === 'In Transit' && (
+                                <button onClick={() => handleUpdateStatus(order, 'Delivered')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">
+                                  Mark Delivered
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-20 gap-4">
@@ -204,145 +227,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
 
           {activeTab === 'inventory' && (
-            <div className="p-8">
-              <div className="flex justify-between items-center mb-10">
-                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Stock <span className="text-blue-600">Inventory</span></h3>
-                {currentUser.permissions.access_inventory && (
-                  <button onClick={() => setShowAddModal(true)} className="px-6 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2">
-                    <i className="fa-solid fa-plus"></i> Add New Product
-                  </button>
-                )}
-              </div>
-              {currentUser.permissions.access_inventory ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map(product => (
-                    <div key={product.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex items-center justify-between group hover:border-blue-200 transition-all">
-                      <div className="flex items-center gap-4">
-                        <img src={product.image} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt="" />
-                        <div>
-                          <p className="font-black text-slate-800 text-xs">{product.name}</p>
-                          <p className="text-[10px] font-bold text-blue-600 uppercase">Stock: {product.stock}</p>
-                        </div>
-                      </div>
-                      <button onClick={() => onUpdateStock(product.id, product.stock + 10)} className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
-                        <i className="fa-solid fa-plus text-[10px]"></i>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full p-20 gap-4">
-                  <i className="fa-solid fa-lock text-5xl text-slate-100"></i>
-                  <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Permission 'access_inventory' Denied.</p>
-                </div>
-              )}
-            </div>
+            <InventorySection
+              currentUser={currentUser}
+              products={products}
+              categories={categories}
+              onUpdateStock={onUpdateStock}
+              onDeleteProduct={onDeleteProduct}
+              onSetFlashSale={onSetFlashSale}
+              onAddProduct={onAddProduct}
+              onAddCategory={onAddCategory}
+              onDeleteCategory={onDeleteCategory}
+              setSystemAlert={setSystemAlert}
+            />
           )}
 
           {activeTab === 'shipping' && (
-            <div className="p-8 space-y-8">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Shipping <span className="text-blue-600">Zones & Fees</span></h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Configure automated pricing for the Nyahururu Address Book</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {shippingZones.map(zone => (
-                  <div key={zone.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
-                        <i className="fa-solid fa-map-location-dot"></i>
-                      </div>
-                      <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-2 py-1 rounded-md">{zone.estimatedDays}</span>
-                    </div>
-                    <div>
-                      <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm">{zone.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-bold">Base Shipping Fee</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black text-slate-400 uppercase">KES</span>
-                      <input
-                        type="number"
-                        className="bg-white border border-slate-200 rounded-xl px-4 py-2 w-full text-sm font-black text-black focus:border-blue-600 outline-none"
-                        value={zone.fee}
-                        onChange={(e) => onUpdateShippingZone(zone.id, parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ShippingSection
+              shippingZones={shippingZones}
+              onUpdateShippingZone={onUpdateShippingZone}
+              onAddShippingZone={onAddShippingZone}
+              onDeleteShippingZone={onDeleteShippingZone}
+            />
           )}
 
           {activeTab === 'social' && isAdmin && (
-            <div className="p-8 space-y-8 max-w-2xl mx-auto">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Social Media <span className="text-blue-600">Integration</span></h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Configure external connection points for the clinical community</p>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp Official Number</label>
-                  <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600"><i className="fa-brands fa-whatsapp"></i></div>
-                    <input
-                      type="text"
-                      className="flex-1 bg-transparent text-sm font-black text-black outline-none"
-                      value={socialEdit.whatsapp}
-                      onChange={(e) => setSocialEdit({ ...socialEdit, whatsapp: e.target.value })}
-                      placeholder="+254 XXX XXXXXX"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Facebook Page URL</label>
-                  <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600"><i className="fa-brands fa-facebook-f"></i></div>
-                    <input
-                      type="text"
-                      className="flex-1 bg-transparent text-sm font-black text-black outline-none"
-                      value={socialEdit.facebook}
-                      onChange={(e) => setSocialEdit({ ...socialEdit, facebook: e.target.value })}
-                      placeholder="https://facebook.com/..."
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Instagram Account URL</label>
-                  <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div className="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center text-pink-600"><i className="fa-brands fa-instagram"></i></div>
-                    <input
-                      type="text"
-                      className="flex-1 bg-transparent text-sm font-black text-black outline-none"
-                      value={socialEdit.instagram}
-                      onChange={(e) => setSocialEdit({ ...socialEdit, instagram: e.target.value })}
-                      placeholder="https://instagram.com/..."
-                    />
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    onUpdateSocialLinks(socialEdit);
-                    setSystemAlert({ message: 'Social Hub Updated', type: 'success' });
-                    setTimeout(() => setSystemAlert(null), 3000);
-                  }}
-                  className="w-full py-5 bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 shadow-xl shadow-blue-100 transition-all"
-                >
-                  Save Integration Details
-                </button>
-              </div>
-            </div>
+            <SocialSection
+              socialLinks={socialLinks}
+              onUpdateSocialLinks={onUpdateSocialLinks}
+              setSystemAlert={setSystemAlert}
+            />
           )}
 
           {activeTab === 'staff' && isAdmin && (
             <div className="p-8">
-              <StaffManagement staffList={staffList} onUpdatePermissions={updatePermissions} onCreateStaff={(data) => {
-                const newS: StaffMember = { ...data, id: `st-${Date.now()}`, role: 'staff', permissions: { access_orders: true, access_inventory: false, access_revenue_data: false } };
-                setStaffList([...staffList, newS]);
-              }} />
+              <StaffManagement
+                staffList={staffList}
+                onUpdatePermissions={updatePermissions}
+                onUpdateStaff={(updated) => {
+                  setStaffList(prev => prev.map(s => s.id === updated.id ? updated : s));
+                  onUpdateStaff(updated); // Propagate to parent if needed, but local state update is key for UI
+                }}
+                onDeleteStaff={(id) => {
+                  setStaffList(prev => prev.filter(s => s.id !== id));
+                  onDeleteStaff(id);
+                }}
+                onCreateStaff={(data) => {
+                  const newS: StaffMember = { ...data, id: `st-${Date.now()}`, role: 'staff', permissions: { access_orders: true, access_inventory: false, access_revenue_data: false } };
+                  setStaffList([...staffList, newS]);
+                }}
+              />
             </div>
           )}
 
@@ -365,33 +298,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {showAddModal && (
-        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-blue-900/60 backdrop-blur-md">
-          <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col md:flex-row">
-            <div className="w-full md:w-5/12 bg-slate-50 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100">
-              <div className="relative group w-full aspect-square mb-6">
-                {previewImage ? <img src={previewImage} className="w-full h-full object-cover rounded-3xl shadow-lg border-4 border-white" alt="Preview" /> : <div className="w-full h-full bg-white border-4 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-300 gap-4 group-hover:border-blue-400 transition-colors"><i className="fa-solid fa-cloud-arrow-up text-5xl"></i><p className="text-[10px] font-black uppercase tracking-widest">Drop Image Here</p></div>}
-                <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
-                {previewImage && <button onClick={() => { setPreviewImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"><i className="fa-solid fa-xmark text-xs"></i></button>}
-              </div>
-            </div>
-            <div className="flex-1 p-10">
-              <div className="flex justify-between items-start mb-8">
-                <div><h3 className="text-2xl font-black text-blue-900 uppercase tracking-tighter">Add <span className="text-blue-600">Product</span></h3><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Nyahururu Hub Inventory Management</p></div>
-                <button onClick={() => setShowAddModal(false)} className="text-slate-300 hover:text-red-500 transition-colors"><i className="fa-solid fa-xmark text-xl"></i></button>
-              </div>
-              <form onSubmit={handleAddProduct} className="space-y-4">
-                <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Product Title</label><input required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="e.g. Premium Medical Clogs" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Price (KES)</label><input required type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="3500" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} /></div>
-                  <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label><select className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}><option>Apparel</option><option>Equipment</option><option>Diagnostics</option><option>Accessories</option><option>Footwear</option></select></div>
-                </div>
-                <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Technical Description</label><textarea required rows={3} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black resize-none" placeholder="Enter fabric details..." value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} /></div>
-                <button type="submit" disabled={uploading} className="w-full py-5 bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 shadow-xl shadow-blue-100 flex items-center justify-center gap-3 disabled:opacity-50">{uploading ? <i className="fa-solid fa-circle-notch animate-spin"></i> : <i className="fa-solid fa-check"></i>}{uploading ? 'Processing Assets...' : 'Finalize & Publish'}</button>
-              </form>
-            </div>
-          </div>
-        </div>
+      {selectedOrder && (
+        <OrderManifestModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onMarkShipped={handleMarkShipped}
+        />
       )}
     </div>
   );
