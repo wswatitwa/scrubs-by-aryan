@@ -4,7 +4,6 @@ dist
 .github
 README.md
 Dockerfile
-nginx.conf
 .env
 .env.local
 .env.development.local
