@@ -126,9 +126,6 @@ const App: React.FC = () => {
         setLoading(false);
       }
     };
-    // Start Sync Service
-    import('./services/syncService');
-
     loadPublicData();
   }, []);
 
@@ -138,6 +135,9 @@ const App: React.FC = () => {
 
     const loadAdminData = async () => {
       if (!currentStaff) return;
+
+      // Initialize Offline Sync Engine for Staff Only
+      import('./services/syncService');
 
       try {
         const [fetchedOrders, fetchedTenders] = await Promise.all([
