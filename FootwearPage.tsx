@@ -1,7 +1,8 @@
 // Fix: Standardized to use global modal
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
-import { Product, SocialMediaLinks } from './types';
+import ProductCard from './components/ProductCard';
+import { Product, SocialMediaLinks, Review } from './types';
 import Footer from './components/Footer';
 
 interface FootwearPageProps {
@@ -14,6 +15,7 @@ interface FootwearPageProps {
   products: Product[];
   socialLinks: SocialMediaLinks;
   onOpenTender: () => void;
+  onAddReview: (productId: string, review: Omit<Review, 'id' | 'date'>) => void;
 }
 
 type SubCategory = 'Medical Clogs' | 'Performance Sneakers' | 'Compression Wear';
@@ -111,7 +113,7 @@ const FOOTWEAR_DATA: Record<SubCategory, FootwearItem[]> = {
   ]
 };
 
-const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender }) => {
+const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview }) => {
   const [activeTab, setActiveTab] = useState<SubCategory>('Medical Clogs');
 
   const categoryProducts = products.filter(p => p.category === 'Footwear');
@@ -154,25 +156,12 @@ const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCa
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
             {displayProducts.map(item => (
-              <div
+              <ProductCard
                 key={item.id}
-                onClick={() => onAddToCart(item)}
-                className="group cursor-pointer bg-white rounded-[4rem] overflow-hidden prestige-card transition-all duration-700 hover:-translate-y-4 hover:border-b-[12px] hover:border-cyan-500"
-              >
-                <div className="aspect-[4/5] overflow-hidden relative">
-                  {/* Overlay for distinct look */}
-                  <div className="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
-                  <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt={item.name} />
-                </div>
-                <div className="p-12 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">{item.styles?.[0] || 'Ergonomic'}</span>
-                    <span className="text-2xl font-black text-slate-900">KES {item.price.toLocaleString()}</span>
-                  </div>
-                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none">{item.name}</h3>
-                  <p className="text-slate-400 font-medium text-sm italic">{item.description}</p>
-                </div>
-              </div>
+                product={item}
+                onAddToCart={onAddToCart}
+                onAddReview={onAddReview}
+              />
             ))}
           </div>
 
