@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { Product, Order, StoreSettings } from './types';
+import { Product, Order, StoreSettings } from '../types';
 
 // Define the schema for the local database
 export class CrubsDatabase extends Dexie {
