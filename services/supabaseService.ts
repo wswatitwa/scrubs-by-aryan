@@ -241,12 +241,14 @@ export const api = {
     // For this migration, we will focus on the core commerce data.
     // --- Realtime ---
     subscribeToOrders(onNewOrder: (order: Order) => void): any {
+        console.log("🔌 Initializing Order Subscription...");
         return supabase
             .channel('public:orders')
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'orders' },
                 (payload: any) => {
+                    console.log("🔔 New Order Received via Realtime:", payload);
                     const o = payload.new;
                     const newOrder: Order = {
                         id: o.id,
@@ -266,6 +268,14 @@ export const api = {
                     onNewOrder(newOrder);
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log("✅ Successfully subscribed to new orders.");
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error("❌ Failed to subscribe to order updates.");
+                } else if (status === 'TIMED_OUT') {
+                    console.error("⚠️ Order subscription timed out.");
+                }
+            });
     },
 };

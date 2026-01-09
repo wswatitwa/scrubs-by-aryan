@@ -169,7 +169,59 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {/* ... */}
                 <div className="overflow-x-auto flex-1">
                   <table className="w-full text-left">
-                    {/* ... */}
+                    <thead>
+                      <tr className="border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                        <th className="p-4">Ref</th>
+                        <th className="p-4">Customer</th>
+                        <th className="p-4">Location</th>
+                        <th className="p-4">Items</th>
+                        <th className="p-4">Total</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {orders.filter(o => orderFilter === 'All' || o.status === orderFilter).map(order => (
+                        <tr key={order.id} className="hover:bg-slate-50 transition-colors group">
+                          <td className="p-4 font-black text-slate-600 text-xs">{order.id}</td>
+                          <td className="p-4">
+                            <div className="text-sm font-bold text-slate-900">{order.customerName}</div>
+                            <div className="text-[10px] text-slate-400 font-medium">{order.customerPhone}</div>
+                          </td>
+                          <td className="p-4 text-xs font-bold text-slate-500">{order.location}</td>
+                          <td className="p-4">
+                            <div className="flex -space-x-2">
+                              {order.items.slice(0, 3).map((item, i) => (
+                                <img key={i} src={item.image} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
+                              ))}
+                              {order.items.length > 3 && (
+                                <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-400">
+                                  +{order.items.length - 3}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4 font-black text-slate-900 text-sm">KES {order.total.toLocaleString()}</td>
+                          <td className="p-4">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${order.status === 'Pending' ? 'bg-amber-100 text-amber-600 border-amber-200' :
+                                order.status === 'Sent' ? 'bg-blue-100 text-blue-600 border-blue-200' :
+                                  order.status === 'In Transit' ? 'bg-purple-100 text-purple-600 border-purple-200' :
+                                    'bg-emerald-100 text-emerald-600 border-emerald-200'
+                              }`}>
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => setSelectedOrder(order)}
+                              className="w-8 h-8 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 flex items-center justify-center transition-all shadow-sm"
+                            >
+                              <i className="fa-solid fa-eye"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
               </div>

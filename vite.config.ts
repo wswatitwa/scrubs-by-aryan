@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => {
           description: 'Premium Clinical Gear & Equipment',
           theme_color: '#001a1a',
           background_color: '#001a1a',
+          start_url: '/BLUE-SKYWATITWA',
           display: 'standalone',
           icons: [
             {

@@ -80,6 +80,13 @@ const App: React.FC = () => {
         localStorage.removeItem('crubs_staff_session');
       }
     }
+
+    // Force PWA to Back Office Mode
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    if (isStandalone && !savedSession && window.location.pathname !== SECRET_PATH) {
+      window.location.href = SECRET_PATH;
+    }
+
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
