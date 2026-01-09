@@ -64,6 +64,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogout,
   categories,
   onAddCategory,
+  onUpdateCategory,
   onDeleteCategory,
   onUpdateStaff,
   onDeleteStaff
@@ -247,6 +248,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               onAddProduct={onAddProduct}
               onUpdateProduct={onUpdateProduct}
               onAddCategory={onAddCategory}
+              onUpdateCategory={onUpdateCategory}
               onDeleteCategory={onDeleteCategory}
               setSystemAlert={setSystemAlert}
             />
