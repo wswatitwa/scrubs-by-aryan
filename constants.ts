@@ -13,7 +13,8 @@ export const SHIPPING_ZONES: ShippingZone[] = [
 export const INITIAL_SOCIAL_LINKS: SocialMediaLinks = {
   whatsapp: '+254 722 435698',
   facebook: 'https://web.facebook.com/p/Scrubs-by-Aryan-Ke-61554847971027/?_rdc=1&_rdr#',
-  instagram: ''
+  instagram: '',
+  facebookPostUrl: 'https://www.facebook.com/20531316728/posts/10154009990506729/'
 };
 
 export const PRODUCT_SUBCATEGORIES: Record<string, string[]> = {

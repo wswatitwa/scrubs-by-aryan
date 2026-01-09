@@ -15,6 +15,7 @@ import OrderTracking from './components/OrderTracking';
 import TenderRequestForm from './components/TenderRequestForm';
 import FlashSaleBanner from './components/FlashSaleBanner';
 import Footer from './components/Footer';
+import SocialFeed from './components/SocialFeed';
 import AuthPortal from './components/AuthPortal';
 import FakeNotFound from './components/FakeNotFound';
 import ApparelPage from './ApparelPage';
@@ -664,6 +665,7 @@ const App: React.FC = () => {
             </div>
           </section>
         </main>
+        <SocialFeed postUrl={socialLinks.facebookPostUrl} />
         <Footer
           socialLinks={socialLinks}
           onOpenTracking={() => setIsTrackingOpen(true)}

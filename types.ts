@@ -110,6 +110,7 @@ export interface SocialMediaLinks {
   instagram: string;
   facebookPageId?: string; // For Facebook Feed
   instagramToken?: string; // For Instagram Feed
+  facebookPostUrl?: string; // For Embedded Post
 }
 
 export interface StoreSettings {

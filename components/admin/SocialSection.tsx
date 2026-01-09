@@ -80,6 +80,21 @@ const SocialSection: React.FC<SocialSectionProps> = ({ socialLinks, onUpdateSoci
                         </div>
 
                         <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Featured Facebook Post URL</label>
+                            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white"><i className="fa-brands fa-facebook-f"></i></div>
+                                <input
+                                    type="text"
+                                    className="flex-1 bg-transparent text-sm font-black text-black outline-none"
+                                    value={socialEdit.facebookPostUrl || ''}
+                                    onChange={(e) => setSocialEdit({ ...socialEdit, facebookPostUrl: e.target.value })}
+                                    placeholder="https://www.facebook.com/.../posts/..."
+                                />
+                            </div>
+                            <p className="text-[9px] text-slate-400 font-bold ml-1">Directly embed a public post (e.g. pinned announcement) effectively creating a live feed item.</p>
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Instagram Access Token</label>
                             <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 <div className="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center text-pink-600"><i className="fa-solid fa-key"></i></div>
