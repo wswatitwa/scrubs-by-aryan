@@ -90,19 +90,29 @@ CREATE TABLE IF NOT EXISTS staff_profiles (
 -- RLS for Staff Profiles
 ALTER TABLE staff_profiles ENABLE ROW LEVEL SECURITY;
 
--- Policy: Admins can view all profiles, Staff can view their own
-CREATE POLICY "Admins can view all profiles" 
-    ON staff_profiles FOR SELECT 
-    USING (auth.uid() IN (SELECT id FROM staff_profiles WHERE role = 'admin'));
+-- Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Admins can view all profiles" ON staff_profiles;
+DROP POLICY IF EXISTS "Users can view own profile" ON staff_profiles;
+DROP POLICY IF EXISTS "Admins can manage profiles" ON staff_profiles;
 
+-- Policy: Users can strictly view ONLY their own profile
 CREATE POLICY "Users can view own profile" 
     ON staff_profiles FOR SELECT 
     USING (auth.uid() = id);
 
--- Policy: Only Admins can update/insert profiles (usually done via invite function)
+-- Policy: Admins can view ALL profiles
+CREATE POLICY "Admins can view all profiles" 
+    ON staff_profiles FOR SELECT 
+    USING (
+      auth.uid() IN (SELECT id FROM staff_profiles WHERE role = 'admin')
+    );
+
+-- Policy: Admins can INSERT/UPDATE/DELETE profiles
 CREATE POLICY "Admins can manage profiles" 
     ON staff_profiles FOR ALL 
-    USING (auth.uid() IN (SELECT id FROM staff_profiles WHERE role = 'admin'));
+    USING (
+      auth.uid() IN (SELECT id FROM staff_profiles WHERE role = 'admin')
+    );
 
 -- Trigger to create profile on signup? 
 -- Ideally for staff, an Admin invites them, creating the auth user and the profile.
