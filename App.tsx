@@ -60,28 +60,13 @@ const App: React.FC = () => {
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({ embroideryFee: 300 });
 
   useEffect(() => {
-    // Initial Load
-    const loadData = async () => {
-      const [productsData, ordersData, categoriesData] = await Promise.all([
-        api.getProducts(),
-        api.getOrders(),
-        api.getCategories()
-      ]);
-
-      setProducts(productsData);
-      setOrders(ordersData);
-      setCategories(categoriesData);
-
-      // ... (rest of loading logic if any)
-    };
-    loadData();
-    // ... rest of useEffect
-
     const handleLocationChange = () => {
       setCurrentPath(window.location.pathname);
       window.scrollTo(0, 0);
     };
     window.addEventListener('popstate', handleLocationChange);
+
+    // Initialize session
     const savedSession = localStorage.getItem('crubs_staff_session');
     if (savedSession) {
       try {
@@ -124,14 +109,16 @@ const App: React.FC = () => {
     const loadPublicData = async () => {
       setLoading(true);
       try {
-        const [fetchedProducts, fetchedZones, fetchedSettings] = await Promise.all([
+        const [fetchedProducts, fetchedZones, fetchedSettings, fetchedCategories] = await Promise.all([
           api.getProducts(),
           api.getShippingZones(),
-          api.getStoreSettings()
+          api.getStoreSettings(),
+          api.getCategories()
         ]);
 
         if (fetchedProducts.length > 0) setProducts(fetchedProducts);
         if (fetchedZones.length > 0) setShippingZones(fetchedZones);
+        if (fetchedCategories.length > 0) setCategories(fetchedCategories);
         setStoreSettings(fetchedSettings);
       } catch (e) {
         console.error("Failed to load public data", e);
