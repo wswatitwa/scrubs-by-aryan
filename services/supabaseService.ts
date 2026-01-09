@@ -304,17 +304,20 @@ export const api = {
     // Note: Staff management usually requires more secure handling. 
     // For this migration, we will focus on the core commerce data.
     // --- Realtime ---
-    subscribeToOrders(onNewOrder: (order: Order) => void): any {
+    subscribeToOrders(onNewOrder: (order: Order) => void, onUpdateOrder?: (order: Order) => void): any {
         console.log("🔌 Initializing Order Subscription...");
         return supabase
             .channel('public:orders')
             .on(
                 'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'orders' },
+                { event: '*', schema: 'public', table: 'orders' },
                 (payload: any) => {
-                    console.log("🔔 New Order Received via Realtime:", payload);
-                    const o = payload.new;
-                    const newOrder: Order = {
+                    const o = payload.new || payload.old; // Payload.new for Insert/Update, Payload.old for Delete (id only usually)
+                    if (!payload.new) return; // Ignore deletes for now in this specific flow if we only care about additions/updates
+
+                    console.log(`🔔 Order Update (${payload.eventType}):`, payload);
+
+                    const orderData: Order = {
                         id: o.id,
                         customerName: o.customer_name,
                         customerPhone: o.customer_phone,
@@ -329,17 +332,67 @@ export const api = {
                         notes: o.notes,
                         createdAt: o.created_at
                     };
-                    onNewOrder(newOrder);
+
+                    if (payload.eventType === 'INSERT') {
+                        onNewOrder(orderData);
+                    } else if (payload.eventType === 'UPDATE' && onUpdateOrder) {
+                        onUpdateOrder(orderData);
+                    }
                 }
             )
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log("✅ Successfully subscribed to new orders.");
-                } else if (status === 'CHANNEL_ERROR') {
-                    console.error("❌ Failed to subscribe to order updates.");
-                } else if (status === 'TIMED_OUT') {
-                    console.error("⚠️ Order subscription timed out.");
+            .subscribe();
+    },
+
+    subscribeToProducts(onChange: (eventType: 'INSERT' | 'UPDATE' | 'DELETE', product: Product) => void): any {
+        return supabase
+            .channel('public:products')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'products' },
+                (payload: any) => {
+                    if (payload.eventType === 'DELETE') {
+                        // For delete, we only get the ID usually if replica identity is default
+                        onChange('DELETE', { id: payload.old.id } as Product);
+                        return;
+                    }
+
+                    const p = payload.new;
+                    const product: Product = {
+                        ...p,
+                        subCategory: p.sub_category,
+                        originalPrice: p.original_price,
+                        isFeatured: p.is_featured,
+                        embroideryPrice: p.embroidery_price,
+                        packageSize: p.package_size
+                    };
+                    onChange(payload.eventType, product);
                 }
-            });
+            )
+            .subscribe();
+    },
+
+    subscribeToCategories(onChange: (eventType: 'INSERT' | 'UPDATE' | 'DELETE', category: any) => void): any {
+        return supabase
+            .channel('public:categories')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'categories' },
+                (payload: any) => {
+                    if (payload.eventType === 'DELETE') {
+                        onChange('DELETE', { id: payload.old.id });
+                        return;
+                    }
+
+                    const c = payload.new;
+                    const category = {
+                        id: c.id,
+                        name: c.name,
+                        path: c.path,
+                        subCategories: c.sub_categories || []
+                    };
+                    onChange(payload.eventType, category);
+                }
+            )
+            .subscribe();
     },
 };

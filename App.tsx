@@ -106,6 +106,9 @@ const App: React.FC = () => {
   // Load Data from Supabase
   // Load Public Data Initial
   useEffect(() => {
+    let productSub: any;
+    let categorySub: any;
+
     const loadPublicData = async () => {
       setLoading(true);
       try {
@@ -120,6 +123,30 @@ const App: React.FC = () => {
         if (fetchedZones.length > 0) setShippingZones(fetchedZones);
         if (fetchedCategories.length > 0) setCategories(fetchedCategories);
         setStoreSettings(fetchedSettings);
+
+        // --- Realtime Subscriptions ---
+        // Products
+        productSub = api.subscribeToProducts((type, payload) => {
+          if (type === 'DELETE') {
+            setProducts(prev => prev.filter(p => p.id !== payload.id));
+          } else if (type === 'INSERT') {
+            setProducts(prev => [payload, ...prev]);
+          } else if (type === 'UPDATE') {
+            setProducts(prev => prev.map(p => p.id === payload.id ? payload : p));
+          }
+        });
+
+        // Categories
+        categorySub = api.subscribeToCategories((type, payload) => {
+          if (type === 'DELETE') {
+            setCategories(prev => prev.filter(c => c.id !== payload.id));
+          } else if (type === 'INSERT') {
+            setCategories(prev => [...prev, payload]);
+          } else if (type === 'UPDATE') {
+            setCategories(prev => prev.map(c => c.id === payload.id ? payload : c));
+          }
+        });
+
       } catch (e) {
         console.error("Failed to load public data", e);
       } finally {
@@ -127,6 +154,11 @@ const App: React.FC = () => {
       }
     };
     loadPublicData();
+
+    return () => {
+      if (productSub) import('./lib/supabase').then(({ supabase }) => supabase.removeChannel(productSub));
+      if (categorySub) import('./lib/supabase').then(({ supabase }) => supabase.removeChannel(categorySub));
+    };
   }, []);
 
   // Load Admin Data when Staff Logs In
@@ -433,6 +465,14 @@ const App: React.FC = () => {
   if (currentStaff) {
     return (
       <div className="min-h-screen bg-[#001a1a]">
+        {staffAlert && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] animate-in slide-in-from-top-4">
+            <div className={`px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border text-white ${staffAlert.includes('Failed') || staffAlert.includes('Error') ? 'bg-red-600 border-red-500' : 'bg-emerald-600 border-emerald-500'}`}>
+              <i className={`fa-solid ${staffAlert.includes('Failed') || staffAlert.includes('Error') ? 'fa-triangle-exclamation' : 'fa-shield-check'} text-xl`}></i>
+              <span className="text-[11px] font-black uppercase tracking-widest">{staffAlert}</span>
+            </div>
+          </div>
+        )}
         <Navbar cartCount={0} onOpenCart={() => { }} onOpenTracking={() => { }} onOpenSearch={() => { }} isAdmin={true} categories={categories} />
         <AdminDashboard
           currentUser={currentStaff}
