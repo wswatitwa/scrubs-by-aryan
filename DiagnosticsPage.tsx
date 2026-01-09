@@ -15,12 +15,14 @@ interface DiagnosticsPageProps {
   socialLinks: SocialMediaLinks;
   onOpenTender: () => void;
   onAddReview: (productId: string, review: Omit<Review, 'id' | 'date'>) => void;
+  subCategories: string[];
 }
 
-type SubCategory = 'Glucometers' | 'Rapid Test Kits' | 'Lab Consumables';
-
-const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview }) => {
-  const [activeTab, setActiveTab] = useState<SubCategory>('Glucometers');
+const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
+  onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview,
+  subCategories
+}) => {
+  const [activeTab, setActiveTab] = useState<string>(subCategories[0] || 'All');
 
   const categoryProducts = products.filter(p => p.category === 'Diagnostics');
   const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
@@ -48,7 +50,7 @@ const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({ onBack, cartCount, on
             </h1>
 
             <div className="flex flex-wrap justify-center gap-2 md:gap-4 bg-white/5 p-2 md:p-4 rounded-[2rem] md:rounded-[3rem] border border-white/10 w-full max-w-3xl">
-              {(['Glucometers', 'Rapid Test Kits', 'Lab Consumables'] as SubCategory[]).map(tab => (
+              {subCategories.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}

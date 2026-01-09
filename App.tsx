@@ -56,17 +56,27 @@ const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [socialLinks, setSocialLinks] = useState<SocialMediaLinks>(INITIAL_SOCIAL_LINKS);
-  const [categories, setCategories] = useState<{ name: string, path: string }[]>([
-    { name: 'Apparel', path: '/apparel' },
-    { name: 'PPE', path: '/ppe' },
-    { name: 'Equipment', path: '/equipment' },
-    { name: 'Diagnostics', path: '/diagnostics' },
-    { name: 'Accessories', path: '/accessories' },
-    { name: 'Footwear', path: '/footwear' }
-  ]);
+  const [categories, setCategories] = useState<any[]>([]); // Dynamic Categories
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({ embroideryFee: 300 });
 
   useEffect(() => {
+    // Initial Load
+    const loadData = async () => {
+      const [productsData, ordersData, categoriesData] = await Promise.all([
+        api.getProducts(),
+        api.getOrders(),
+        api.getCategories()
+      ]);
+
+      setProducts(productsData);
+      setOrders(ordersData);
+      setCategories(categoriesData);
+
+      // ... (rest of loading logic if any)
+    };
+    loadData();
+    // ... rest of useEffect
+
     const handleLocationChange = () => {
       setCurrentPath(window.location.pathname);
       window.scrollTo(0, 0);
@@ -104,13 +114,7 @@ const App: React.FC = () => {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
-  const handleAddCategory = (name: string) => {
-    setCategories(prev => [...prev, { name, path: `/${name.toLowerCase().replace(/\s+/g, '-')}` }]);
-  };
 
-  const handleDeleteCategory = (name: string) => {
-    setCategories(prev => prev.filter(c => c.name !== name));
-  };
 
   const [loading, setLoading] = useState(true);
 
@@ -229,6 +233,33 @@ const App: React.FC = () => {
     setProducts(p => p.filter(prod => prod.id !== id));
     api.deleteProduct(id);
   };
+
+  // --- Category Handlers ---
+  const handleAddCategory = async (name: string, subCategories: string[] = []) => {
+    const newCat = await api.addCategory(name, subCategories);
+    if (newCat) {
+      setCategories(prev => [...prev, newCat]);
+      setStaffAlert("Category Added");
+    }
+    setTimeout(() => setStaffAlert(null), 3000);
+  };
+
+  const handleUpdateCategory = async (id: string, updates: { name?: string, subCategories?: string[] }) => {
+    await api.updateCategory(id, updates);
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    setStaffAlert("Category Updated");
+    setTimeout(() => setStaffAlert(null), 3000);
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (confirm('Are you sure? This will delete the category and its subcategories.')) {
+      await api.deleteCategory(id);
+      setCategories(prev => prev.filter(c => c.id !== id));
+      setStaffAlert("Category Deleted");
+      setTimeout(() => setStaffAlert(null), 3000);
+    }
+  };
+  // --------------------------
 
   const handleAddProduct = async (p: Product) => {
     // 1. Optimistic Update (Instant feedback)
@@ -468,6 +499,7 @@ const App: React.FC = () => {
           onLogout={handleLogout}
           categories={categories}
           onAddCategory={handleAddCategory}
+          onUpdateCategory={handleUpdateCategory}
           onDeleteCategory={handleDeleteCategory}
           onUpdateStaff={(updated) => {
             // Mock persistence
@@ -506,17 +538,23 @@ const App: React.FC = () => {
 
   let content;
   if (currentPath === '/apparel') {
-    content = <ApparelPage {...commonPageProps} />;
+    const cat = categories.find(c => c.name === 'Apparel');
+    content = <ApparelPage {...commonPageProps} subCategories={cat?.subCategories || []} />;
   } else if (currentPath === '/equipment') {
-    content = <EquipmentPage {...commonPageProps} />;
+    const cat = categories.find(c => c.name === 'Equipment');
+    content = <EquipmentPage {...commonPageProps} subCategories={cat?.subCategories || []} />;
   } else if (currentPath === '/diagnostics') {
-    content = <DiagnosticsPage {...commonPageProps} />;
+    const cat = categories.find(c => c.name === 'Diagnostics');
+    content = <DiagnosticsPage {...commonPageProps} subCategories={cat?.subCategories || []} />;
   } else if (currentPath === '/accessories') {
-    content = <AccessoriesPage {...commonPageProps} />;
+    const cat = categories.find(c => c.name === 'Accessories');
+    content = <AccessoriesPage {...commonPageProps} subCategories={cat?.subCategories || []} />;
   } else if (currentPath === '/footwear') {
-    content = <FootwearPage {...commonPageProps} />;
+    const cat = categories.find(c => c.name === 'Footwear');
+    content = <FootwearPage {...commonPageProps} subCategories={cat?.subCategories || []} />;
   } else if (currentPath === '/ppe') {
-    content = <PPEPage {...commonPageProps} />;
+    const cat = categories.find(c => c.name === 'PPE');
+    content = <PPEPage {...commonPageProps} subCategories={cat?.subCategories || []} />;
   } else {
     // Default Home Page Content
     const filteredProducts = products.filter(p => {

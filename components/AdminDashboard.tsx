@@ -32,11 +32,12 @@ interface AdminDashboardProps {
   storeSettings: StoreSettings;
   onUpdateSettings: (settings: StoreSettings) => void;
   onLogout: () => void;
-  categories: { name: string; path: string }[];
-  onAddCategory: (name: string) => void;
-  onDeleteCategory: (name: string) => void;
-  onUpdateStaff: (updatedStaff: StaffMember) => void;
-  onDeleteStaff: (staffId: string) => void;
+  categories: any[]; // Using any[] temporarily or import Category
+  onAddCategory: (name: string, subCategories?: string[]) => void;
+  onUpdateCategory: (id: string, updates: any) => void; // Added
+  onDeleteCategory: (id: string) => void;
+  onUpdateStaff?: (updatedStaff: StaffMember) => void; // Made optional as it might be missing
+  onDeleteStaff?: (staffId: string) => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({

@@ -115,3 +115,10 @@ export interface SocialMediaLinks {
 export interface StoreSettings {
   embroideryFee: number;
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  path: string;
+  subCategories: string[];
+}

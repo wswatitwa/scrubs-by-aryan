@@ -16,6 +16,15 @@ export const INITIAL_SOCIAL_LINKS: SocialMediaLinks = {
   instagram: ''
 };
 
+export const PRODUCT_SUBCATEGORIES: Record<string, string[]> = {
+  'Apparel': ['Scrubs', 'Lab Coats', 'Underscrubs', 'Printed Scrubs'],
+  'Footwear': ['Medical Clogs', 'Performance Sneakers', 'Compression Wear', 'Theater Shoes'],
+  'PPE': ['Protective Footwear', 'Headgear', 'Respiratory', 'Hand Protection', 'Body Wear', 'Eye Protection'],
+  'Equipment': ['Stethoscopes', 'BP Machines', 'Monitor Systems', 'ENT & General'],
+  'Diagnostics': ['Glucometers', 'Rapid Test Kits', 'Lab Consumables'],
+  'Accessories': ['Watches', 'Organization', 'Utility']
+};
+
 export const PRODUCTS: Product[] = [
   // APPAREL
   {

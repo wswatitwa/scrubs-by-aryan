@@ -1,25 +1,22 @@
 import React, { useState, useRef } from 'react';
-import { Product, StaffMember } from '../../types';
+import { Product, StaffMember, Category } from '../../types';
 import { uploadProductImage } from '../../lib/supabase';
 
 interface InventorySectionProps {
     currentUser: StaffMember;
     products: Product[];
-    categories: { name: string; path: string }[];
+    categories: Category[];
     onUpdateStock: (productId: string, newStock: number) => void;
     onDeleteProduct: (productId: string) => void;
     onSetFlashSale: (productId: string, discount: number) => void;
     onAddProduct: (product: Omit<Product, 'id'>) => void;
     onUpdateProduct: (product: Product) => void;
-    onAddCategory: (name: string) => void;
-    onDeleteCategory: (name: string) => void;
+    onAddCategory: (name: string, subCategories?: string[]) => void;
+    onUpdateCategory: (id: string, updates: any) => void;
+    onDeleteCategory: (id: string) => void;
     setSystemAlert: (alert: { message: string, type: string } | null) => void;
 }
 
-/**
- * Manages Product Inventory, Categories, and Stock Levels.
- * Contains "Add Product" form, "Flash Sale" modal, and "Delete Confirmation".
- */
 const InventorySection: React.FC<InventorySectionProps> = ({
     currentUser,
     products,
@@ -30,18 +27,20 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     onAddProduct,
     onUpdateProduct,
     onAddCategory,
+    onUpdateCategory,
     onDeleteCategory,
     setSystemAlert
 }) => {
-    const safeCategories = categories || [];
-
     // Local UI State
     const [showAddModal, setShowAddModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
+    // Category Management State
     const [showCategoryModal, setShowCategoryModal] = useState(false);
-    const [newCategory, setNewCategory] = useState('');
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [newSubCategoryName, setNewSubCategoryName] = useState('');
 
     // Add Product Form State
     const [uploading, setUploading] = useState(false);
@@ -49,6 +48,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     const [newProduct, setNewProduct] = useState({
         name: '',
         category: 'Apparel',
+        subCategory: '',
         price: '',
         description: '',
         stock: '50',
@@ -75,7 +75,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     const handleAddProductSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Defensive Coding: Validate Logic (Rule 2)
         if (parseFloat(newProduct.price) < 0) {
             setSystemAlert({ message: 'Price cannot be negative', type: 'error' });
             return;
@@ -86,7 +85,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         }
 
         const file = fileInputRef.current?.files?.[0];
-        // Image is required only for NEW products. For edits, existing image is OK.
         if (!file && !previewImage) {
             setSystemAlert({ message: 'Image File Required', type: 'error' });
             return;
@@ -102,6 +100,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             const productData = {
                 name: newProduct.name,
                 category: newProduct.category,
+                subCategory: newProduct.subCategory,
                 price: parseFloat(newProduct.price),
                 description: newProduct.description,
                 image: imageUrl!,
@@ -121,7 +120,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             }
 
             setShowAddModal(false);
-            setNewProduct({ name: '', category: 'Apparel', price: '', description: '', stock: '50', colors: '', sizes: '', embroideryPrice: '' });
+            setNewProduct({ name: '', category: 'Apparel', subCategory: '', price: '', description: '', stock: '50', colors: '', sizes: '', embroideryPrice: '' });
             setPreviewImage(null);
             setIsEditMode(false);
             setEditingId(null);
@@ -137,6 +136,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         setNewProduct({
             name: product.name,
             category: product.category,
+            subCategory: product.subCategory || '',
             price: product.price.toString(),
             description: product.description,
             stock: product.stock.toString(),
@@ -149,6 +149,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         setIsEditMode(true);
         setShowAddModal(true);
     };
+
+    // Helper to get subcategories for current form selection
+    const currentSubCategories = categories.find(c => c.name === newProduct.category)?.subCategories || [];
 
     return (
         <div className="p-8">
@@ -207,10 +210,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 </div>
             )}
 
-            {/* Add Product Modal */}
+            {/* Add/Edit Product Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-blue-900/60 backdrop-blur-md">
-                    <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col md:flex-row">
+                    <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col md:flex-row max-h-[90vh] overflow-y-auto">
                         <div className="w-full md:w-5/12 bg-slate-50 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100">
                             <div className="relative group w-full aspect-square mb-6">
                                 {previewImage ? <img src={previewImage} className="w-full h-full object-cover rounded-3xl shadow-lg border-4 border-white" alt="Preview" /> : <div className="w-full h-full bg-white border-4 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-300 gap-4 group-hover:border-blue-400 transition-colors"><i className="fa-solid fa-cloud-arrow-up text-5xl"></i><p className="text-[10px] font-black uppercase tracking-widest">Drop Image Here</p></div>}
@@ -220,29 +223,45 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                         </div>
                         <div className="flex-1 p-10">
                             <div className="flex justify-between items-start mb-8">
-                                <div><h3 className="text-2xl font-black text-blue-900 uppercase tracking-tighter">Add <span className="text-blue-600">Product</span></h3><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Nyahururu Hub Inventory Management</p></div>
+                                <div><h3 className="text-2xl font-black text-blue-900 uppercase tracking-tighter">{isEditMode ? 'Edit' : 'Add'} <span className="text-blue-600">Product</span></h3></div>
                                 <button onClick={() => setShowAddModal(false)} className="text-slate-300 hover:text-red-500 transition-colors"><i className="fa-solid fa-xmark text-xl"></i></button>
                             </div>
                             <form onSubmit={handleAddProductSubmit} className="space-y-4">
                                 <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Product Title</label><input required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="e.g. Premium Medical Clogs" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} /></div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Price (KES)</label><input required type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="3500" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} /></div>
-                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Embroidery Fee (Optional)</label><input type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="Def: Global" value={newProduct.embroideryPrice} onChange={e => setNewProduct({ ...newProduct, embroideryPrice: e.target.value })} /></div>
+                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Embroidery (Optional)</label><input type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="Def: Global" value={newProduct.embroideryPrice} onChange={e => setNewProduct({ ...newProduct, embroideryPrice: e.target.value })} /></div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
-                                        <select className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}>
-                                            {safeCategories.length > 0 ? (
-                                                safeCategories.map(c => <option key={c.name} value={c.name}>{c.name}</option>)
+                                        <select className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value, subCategory: '' })}>
+                                            {categories.length > 0 ? (
+                                                categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
                                             ) : (
                                                 <option disabled>No Categories Available</option>
                                             )}
                                         </select>
                                     </div>
+                                    {/* Dynamic Sub Category Dropdown */}
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Sub Category</label>
+                                        <select
+                                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black"
+                                            value={newProduct.subCategory}
+                                            onChange={e => setNewProduct({ ...newProduct, subCategory: e.target.value })}
+                                        >
+                                            <option value="">Select Option</option>
+                                            {currentSubCategories.map(sub => (
+                                                <option key={sub} value={sub}>{sub}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Colors (Comma spread)</label><input className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="Navy, Teal, Black" value={newProduct.colors} onChange={e => setNewProduct({ ...newProduct, colors: e.target.value })} /></div>
-                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Sizes (Comma spread)</label><input className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="S, M, L, XL" value={newProduct.sizes} onChange={e => setNewProduct({ ...newProduct, sizes: e.target.value })} /></div>
+                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Colors</label><input className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="Navy, Teal, Black" value={newProduct.colors} onChange={e => setNewProduct({ ...newProduct, colors: e.target.value })} /></div>
+                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Sizes</label><input className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="S, M, L, XL" value={newProduct.sizes} onChange={e => setNewProduct({ ...newProduct, sizes: e.target.value })} /></div>
                                 </div>
-                                <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Technical Description</label><textarea required rows={3} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black resize-none" placeholder="Enter fabric details..." value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} /></div>
+                                <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label><textarea required rows={3} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black resize-none" placeholder="Enter fabric details..." value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} /></div>
                                 <button type="submit" disabled={uploading} className="w-full py-5 bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 shadow-xl shadow-blue-100 flex items-center justify-center gap-3 disabled:opacity-50">{uploading ? <i className="fa-solid fa-circle-notch animate-spin"></i> : <i className="fa-solid fa-check"></i>}{uploading ? 'Processing Assets...' : 'Finalize & Publish'}</button>
                             </form>
                         </div>
@@ -250,56 +269,135 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 </div>
             )}
 
-            {/* Category Modal */}
+            {/* Manage Categories Modal */}
             {showCategoryModal && (
                 <div className="fixed inset-0 z-[450] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-                    <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
+                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 max-h-[80vh] overflow-y-auto">
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Manage <span className="text-blue-600">Categories</span></h3>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Add or remove product lines</p>
+                                {selectedCategory ? (
+                                    <button onClick={() => setSelectedCategory(null)} className="text-xs text-blue-500 font-bold mt-1 flex items-center gap-1 hover:underline">
+                                        <i className="fa-solid fa-arrow-left"></i> Back to Main Categories
+                                    </button>
+                                ) : (
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Select a category to manage sub-items</p>
+                                )}
                             </div>
                             <button onClick={() => setShowCategoryModal(false)} className="text-slate-300 hover:text-red-500 transition-colors"><i className="fa-solid fa-xmark text-xl"></i></button>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold focus:border-blue-500 outline-none"
-                                    placeholder="New Category Name..."
-                                    value={newCategory}
-                                    onChange={(e) => setNewCategory(e.target.value)}
-                                />
-                                <button
-                                    onClick={() => {
-                                        if (newCategory.trim()) {
-                                            onAddCategory(newCategory.trim());
-                                            setNewCategory('');
-                                        }
-                                    }}
-                                    className="px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                                >
-                                    <i className="fa-solid fa-plus"></i>
-                                </button>
-                            </div>
+                        {!selectedCategory ? (
+                            // Main Categories View
+                            <div className="space-y-6">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold focus:border-blue-500 outline-none"
+                                        placeholder="New Category Name..."
+                                        value={newCategoryName}
+                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (newCategoryName.trim()) {
+                                                onAddCategory(newCategoryName.trim());
+                                                setNewCategoryName('');
+                                            }
+                                        }}
+                                        className="px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                                    >
+                                        <i className="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
 
-                            <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                                {safeCategories.map(cat => (
-                                    <div key={cat.name} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100 group">
-                                        <span className="text-sm font-bold text-slate-700">{cat.name}</span>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm(`Delete category "${cat.name}"?`)) onDeleteCategory(cat.name);
-                                            }}
-                                            className="text-slate-300 hover:text-red-500 transition-colors"
-                                        >
-                                            <i className="fa-solid fa-trash-can"></i>
-                                        </button>
-                                    </div>
-                                ))}
+                                <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                                    {categories.map(cat => (
+                                        <div key={cat.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-blue-200 transition-all cursor-pointer" onClick={() => setSelectedCategory(cat)}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 font-black text-xs">
+                                                    {cat.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <span className="text-sm font-bold text-slate-700 block">{cat.name}</span>
+                                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{cat.subCategories?.length || 0} Sub-categories</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (confirm(`Delete category "${cat.name}" and all contents?`)) onDeleteCategory(cat.id);
+                                                    }}
+                                                    className="w-8 h-8 rounded-full hover:bg-red-100 text-slate-300 hover:text-red-500 transition-colors flex items-center justify-center"
+                                                >
+                                                    <i className="fa-solid fa-trash-can"></i>
+                                                </button>
+                                                <i className="fa-solid fa-chevron-right text-slate-300 ml-2"></i>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            // Sub Categories View
+                            <div className="space-y-6 animate-in slide-in-from-right-4">
+                                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 mb-4">
+                                    <p className="text-xs font-bold text-blue-800 uppercase tracking-wide">Editing: {selectedCategory.name}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold focus:border-blue-500 outline-none"
+                                        placeholder={`New ${selectedCategory.name} Item...`}
+                                        value={newSubCategoryName}
+                                        onChange={(e) => setNewSubCategoryName(e.target.value)}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (newSubCategoryName.trim()) {
+                                                const updatedSubs = [...(selectedCategory.subCategories || []), newSubCategoryName.trim()];
+                                                onUpdateCategory(selectedCategory.id, { subCategories: updatedSubs });
+                                                setNewSubCategoryName('');
+                                                // Optimistic update for local view
+                                                setSelectedCategory({ ...selectedCategory, subCategories: updatedSubs });
+                                            }
+                                        }}
+                                        className="px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                                    >
+                                        <i className="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                                    {selectedCategory.subCategories && selectedCategory.subCategories.length > 0 ? (
+                                        selectedCategory.subCategories.map((sub, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                <span className="text-sm font-bold text-slate-700">{sub}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm(`Remove sub-category "${sub}"?`)) {
+                                                            const updatedSubs = selectedCategory.subCategories.filter(s => s !== sub);
+                                                            onUpdateCategory(selectedCategory.id, { subCategories: updatedSubs });
+                                                            // Optimistic update
+                                                            setSelectedCategory({ ...selectedCategory, subCategories: updatedSubs });
+                                                        }
+                                                    }}
+                                                    className="text-slate-300 hover:text-red-500 transition-colors px-2"
+                                                >
+                                                    <i className="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-10 text-slate-400">
+                                            <i className="fa-solid fa-folder-open text-3xl mb-2 opacity-50"></i>
+                                            <p className="text-xs font-bold uppercase tracking-widest">No Sub-categories yet</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

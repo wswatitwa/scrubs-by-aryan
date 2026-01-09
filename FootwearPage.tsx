@@ -16,105 +16,15 @@ interface FootwearPageProps {
   socialLinks: SocialMediaLinks;
   onOpenTender: () => void;
   onAddReview: (productId: string, review: Omit<Review, 'id' | 'date'>) => void;
+  subCategories: string[];
 }
 
-type SubCategory = 'Medical Clogs' | 'Performance Sneakers' | 'Compression Wear';
 
-interface FootwearItem extends Product {
-  styles?: string[];
-  colors?: { name: string; hex: string }[];
-  sizes?: string[];
-}
-
-const FOOTWEAR_DATA: Record<SubCategory, FootwearItem[]> = {
-  'Medical Clogs': [
-    {
-      id: 'foot-clog-1',
-      name: 'Elite Ventilation Clogs',
-      category: 'Footwear',
-      price: 4200,
-      description: 'Anti-fatigue sole system with superior arch support. Autoclavable material.',
-      image: 'https://images.unsplash.com/photo-1631548210082-65860628659b?auto=format&fit=crop&q=80&w=600',
-      stock: 35,
-      styles: ['Ventilated', 'Block/Solid'],
-      colors: [
-        { name: 'White', hex: '#FFFFFF' },
-        { name: 'Black', hex: '#111111' },
-        { name: 'Navy', hex: '#000080' },
-        { name: 'Cyan', hex: '#06B6D4' }
-      ],
-      sizes: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45']
-    },
-    {
-      id: 'foot-clog-soft',
-      name: 'Soft-Step Clogs',
-      category: 'Footwear',
-      price: 3500,
-      description: 'Ultra-lightweight EVA material with slip-resistant outsole. All-day comfort.',
-      image: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?auto=format&fit=crop&q=80&w=600',
-      stock: 50,
-      styles: ['Classic Pattern', 'Floral Print'],
-      colors: [
-        { name: 'Pink', hex: '#FFC0CB' },
-        { name: 'Purple', hex: '#800080' },
-        { name: 'Teal', hex: '#008080' }
-      ],
-      sizes: ['36', '37', '38', '39', '40', '41']
-    }
-  ],
-  'Performance Sneakers': [
-    {
-      id: 'foot-sneak-1',
-      name: 'Fluid-Resistant Nursing Sneaker',
-      category: 'Footwear',
-      price: 5500,
-      description: 'Athletic design with fluid-resistant coating and slip-resistant rubber sole.',
-      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=600',
-      stock: 25,
-      colors: [
-        { name: 'White', hex: '#FFFFFF' },
-        { name: 'Black', hex: '#000000' },
-        { name: 'Grey', hex: '#808080' }
-      ],
-      sizes: ['38', '39', '40', '41', '42', '43', '44']
-    },
-    {
-      id: 'foot-sneak-2',
-      name: 'Slip-On Recovery Shoe',
-      category: 'Footwear',
-      price: 4800,
-      description: 'Breathable mesh upper with memory foam insole. Easy slip-on design.',
-      image: 'https://images.unsplash.com/photo-1614113489855-66422ad300a4?auto=format&fit=crop&q=80&w=600',
-      stock: 30,
-      colors: [
-        { name: 'Navy', hex: '#000080' },
-        { name: 'Black', hex: '#000000' }
-      ],
-      sizes: ['37', '38', '39', '40', '41', '42']
-    }
-  ],
-  'Compression Wear': [
-    {
-      id: 'foot-sock-comp',
-      name: 'Compression Socks (15-20 mmHg)',
-      category: 'Footwear',
-      price: 1200,
-      description: 'Graduated compression to reduce fatigue and swelling. Moisture-wicking fabric.',
-      image: 'https://images.unsplash.com/photo-1588645063878-3db8778f5a11?auto=format&fit=crop&q=80&w=600',
-      stock: 100,
-      styles: ['Solid', 'Striped', 'Fun Pattern'],
-      colors: [
-        { name: 'Black', hex: '#000000' },
-        { name: 'Blue', hex: '#0000FF' },
-        { name: 'Multicolor', hex: '#FFA500' }
-      ],
-      sizes: ['S/M', 'L/XL']
-    }
-  ]
-};
-
-const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview }) => {
-  const [activeTab, setActiveTab] = useState<SubCategory>('Medical Clogs');
+const FootwearPage: React.FC<FootwearPageProps> = ({
+  onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview,
+  subCategories
+}) => {
+  const [activeTab, setActiveTab] = useState<string>(subCategories[0] || 'All');
 
   const categoryProducts = products.filter(p => p.category === 'Footwear');
   const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
@@ -142,7 +52,7 @@ const FootwearPage: React.FC<FootwearPageProps> = ({ onBack, cartCount, onOpenCa
             </h1>
 
             <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
-              {(Object.keys(FOOTWEAR_DATA) as SubCategory[]).map(tab => (
+              {subCategories.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}

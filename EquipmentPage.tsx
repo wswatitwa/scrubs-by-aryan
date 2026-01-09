@@ -15,12 +15,14 @@ interface EquipmentPageProps {
   socialLinks: SocialMediaLinks;
   onOpenTender: () => void;
   onAddReview: (productId: string, review: Omit<Review, 'id' | 'date'>) => void;
+  subCategories: string[]; // Add prop
 }
 
-type SubCategory = 'BP Machines' | 'Monitor Systems' | 'Stethoscopes' | 'ENT & General';
-
-const EquipmentPage: React.FC<EquipmentPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview }) => {
-  const [activeTab, setActiveTab] = useState<SubCategory>('Stethoscopes');
+const EquipmentPage: React.FC<EquipmentPageProps> = ({
+  onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview,
+  subCategories
+}) => {
+  const [activeTab, setActiveTab] = useState<string>(subCategories[0] || 'All');
 
   const categoryProducts = products.filter(p => p.category === 'Equipment');
   const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
@@ -48,7 +50,7 @@ const EquipmentPage: React.FC<EquipmentPageProps> = ({ onBack, cartCount, onOpen
             </h1>
 
             <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
-              {(['BP Machines', 'Monitor Systems', 'Stethoscopes', 'ENT & General'] as SubCategory[]).map(tab => (
+              {subCategories.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}

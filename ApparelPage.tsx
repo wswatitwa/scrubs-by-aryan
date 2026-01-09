@@ -16,12 +16,14 @@ interface ApparelPageProps {
   socialLinks: SocialMediaLinks;
   onOpenTender: () => void;
   onAddReview: (productId: string, review: Omit<Review, 'id' | 'date'>) => void;
+  subCategories: string[]; // Add prop
 }
 
-type SubCategory = 'Scrubs' | 'Lab Coats';
-
-const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview }) => {
-  const [activeTab, setActiveTab] = useState<SubCategory>('Scrubs');
+const ApparelPage: React.FC<ApparelPageProps> = ({
+  onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview,
+  subCategories // Destructure
+}) => {
+  const [activeTab, setActiveTab] = useState<string>(subCategories[0] || 'All');
 
   // Filter products for this page
   const categoryProducts = products.filter(p => p.category === 'Apparel');
@@ -29,6 +31,11 @@ const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart
 
   return (
     <div className="min-h-screen bg-[#001a1a]">
+      {/* ... Navbar (omitted for brevity in replacement, assuming it matches) */}
+      {/* Wait, I can't look inside Navbar here easily without correct context in replace. 
+          I will just target the Props interface and the specific lines for tabs.
+      */}
+
       <Navbar
         cartCount={cartCount}
         onOpenCart={onOpenCart}
@@ -58,7 +65,7 @@ const ApparelPage: React.FC<ApparelPageProps> = ({ onBack, cartCount, onOpenCart
 
             {/* Sub-Category Tabs */}
             <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
-              {(['Scrubs', 'Lab Coats'] as SubCategory[]).map(tab => (
+              {subCategories.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}

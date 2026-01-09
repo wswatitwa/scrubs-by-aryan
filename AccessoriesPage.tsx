@@ -16,12 +16,14 @@ interface AccessoriesPageProps {
   socialLinks: SocialMediaLinks;
   onOpenTender: () => void;
   onAddReview: (productId: string, review: Omit<Review, 'id' | 'date'>) => void;
+  subCategories: string[];
 }
 
-type SubCategory = 'Watches' | 'Organization' | 'Utility';
-
-const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview }) => {
-  const [activeTab, setActiveTab] = useState<SubCategory>('Watches');
+const AccessoriesPage: React.FC<AccessoriesPageProps> = ({
+  onBack, cartCount, onOpenCart, onOpenTracking, onOpenSearch, onAddToCart, products, socialLinks, onOpenTender, onAddReview,
+  subCategories
+}) => {
+  const [activeTab, setActiveTab] = useState<string>(subCategories[0] || 'All');
 
   const categoryProducts = products.filter(p => p.category === 'Accessories');
   const displayProducts = categoryProducts.filter(p => p.subCategory === activeTab);
@@ -49,7 +51,7 @@ const AccessoriesPage: React.FC<AccessoriesPageProps> = ({ onBack, cartCount, on
             </h1>
 
             <div className="flex flex-wrap justify-center gap-4 bg-white/5 p-4 rounded-[3rem] border border-white/10">
-              {(['Watches', 'Organization', 'Utility'] as SubCategory[]).map(tab => (
+              {subCategories.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}

@@ -13,9 +13,15 @@ export const api = {
             return [];
         }
 
-        // Transform simplified DB structure back to TS types if needed
-        // The JSONB columns (colors, sizes, etc.) map automatically
-        return data as Product[];
+        // Map DB snake_case to camelCase
+        return data?.map((p: any) => ({
+            ...p,
+            subCategory: p.sub_category,
+            originalPrice: p.original_price,
+            isFeatured: p.is_featured,
+            embroideryPrice: p.embroidery_price,
+            packageSize: p.package_size
+        })) as Product[];
     },
 
     async createProduct(product: Product): Promise<Product | null> {
@@ -48,7 +54,8 @@ export const api = {
             package_size: product.packageSize,
             model: product.model,
             warranty: product.warranty,
-            includes: product.includes
+            includes: product.includes,
+            sub_category: product.subCategory
         };
 
         const { data, error } = await supabase.from('products').insert(dbProduct).select().single();
@@ -78,7 +85,8 @@ export const api = {
             package_size: product.packageSize,
             model: product.model,
             warranty: product.warranty,
-            includes: product.includes
+            includes: product.includes,
+            sub_category: product.subCategory
         };
 
         const { data, error } = await supabase.from('products').update(dbProduct).eq('id', product.id).select().single();
@@ -92,6 +100,55 @@ export const api = {
     async deleteProduct(id: string): Promise<void> {
         const { error } = await supabase.from('products').delete().eq('id', id);
         if (error) console.error('Error deleting product:', error);
+    },
+
+    // --- Categories ---
+    async getCategories(): Promise<any[]> {
+        const { data, error } = await supabase.from('categories').select('*').order('name');
+        if (error) {
+            console.error('Error fetching categories:', error);
+            return [];
+        }
+        return data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            path: c.path,
+            subCategories: c.sub_categories || []
+        }));
+    },
+
+    async addCategory(name: string, subCategories: string[] = []): Promise<any | null> {
+        const path = '/' + name.toLowerCase().replace(/ /g, '-');
+        const { data, error } = await supabase.from('categories').insert({ name, path, sub_categories: subCategories }).select().single();
+        if (error) {
+            console.error('Error adding category:', error);
+            return null;
+        }
+        return {
+            id: data.id,
+            name: data.name,
+            path: data.path,
+            subCategories: data.sub_categories
+        };
+    },
+
+    async updateCategory(id: string, updates: { name?: string, subCategories?: string[] }): Promise<void> {
+        const dbUpdates: any = {};
+        if (updates.name) {
+            dbUpdates.name = updates.name;
+            dbUpdates.path = '/' + updates.name.toLowerCase().replace(/ /g, '-');
+        }
+        if (updates.subCategories) {
+            dbUpdates.sub_categories = updates.subCategories;
+        }
+
+        const { error } = await supabase.from('categories').update(dbUpdates).eq('id', id);
+        if (error) console.error('Error updating category:', error);
+    },
+
+    async deleteCategory(id: string): Promise<void> {
+        const { error } = await supabase.from('categories').delete().eq('id', id);
+        if (error) console.error('Error deleting category:', error);
     },
 
     // --- Reviews ---
