@@ -7,6 +7,7 @@ import OrderManifestModal from './admin/OrderManifestModal';
 import InventorySection from './admin/InventorySection';
 import ShippingSection from './admin/ShippingSection';
 import SocialSection from './admin/SocialSection';
+import StoreConfigSection from './admin/StoreConfigSection';
 import ManualOrderModal from './admin/ManualOrderModal';
 
 interface AdminDashboardProps {
