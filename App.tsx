@@ -230,17 +230,37 @@ const App: React.FC = () => {
     api.deleteProduct(id);
   };
 
-  const handleAddProduct = (p: Product) => {
+  const handleAddProduct = async (p: Product) => {
+    // 1. Optimistic Update (Instant feedback)
     setProducts([p, ...products]);
-    api.createProduct(p);
+
+    // 2. Persist to Cloud
+    const saved = await api.createProduct(p);
+
+    // 3. UI Feedback
+    if (saved) {
+      setStaffAlert("✅ Product Added Successfully");
+      setTimeout(() => setStaffAlert(null), 3000);
+    } else {
+      setStaffAlert("❌ Failed to sync product");
+      setTimeout(() => setStaffAlert(null), 5000);
+    }
   };
 
-  const handleUpdatePrice = (id: string, price: number) => {
-    const product = products.find(p => p.id === id);
-    if (product) {
-      const updated = { ...product, price };
-      setProducts(p => p.map(prod => prod.id === id ? updated : prod));
-      api.updateProduct(updated);
+  const handleUpdateProduct = async (updated: Product) => {
+    // 1. Optimistic
+    setProducts(p => p.map(prod => prod.id === updated.id ? updated : prod));
+
+    // 2. Persist
+    const result = await api.updateProduct(updated);
+
+    // 3. Feedback
+    if (result) {
+      setStaffAlert("✅ Product Updated");
+      setTimeout(() => setStaffAlert(null), 3000);
+    } else {
+      setStaffAlert("❌ Update Failed");
+      setTimeout(() => setStaffAlert(null), 3000);
     }
   };
 
@@ -404,7 +424,10 @@ const App: React.FC = () => {
           }}
           onUpdateStock={handleUpdateStock}
           onDeleteProduct={handleDeleteProduct}
-          onUpdatePrice={handleUpdatePrice}
+          onUpdatePrice={(id, price) => {
+            const product = products.find(p => p.id === id);
+            if (product) handleUpdateProduct({ ...product, price });
+          }}
           onSetFlashSale={(id, disc) => {
             const product = products.find(p => p.id === id);
             if (product) {
@@ -414,6 +437,7 @@ const App: React.FC = () => {
             }
           }}
           onAddProduct={handleAddProduct}
+          onUpdateProduct={handleUpdateProduct}
           onAddOrder={handleCreateOrder}
           onUpdateShippingZone={(id, fee) => {
             const zone = shippingZones.find(z => z.id === id);

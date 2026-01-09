@@ -22,6 +22,7 @@ interface AdminDashboardProps {
   onUpdatePrice: (productId: string, newPrice: number) => void;
   onSetFlashSale: (productId: string, discount: number) => void;
   onAddProduct: (product: Omit<Product, 'id'>) => void;
+  onUpdateProduct: (product: Product) => void;
   onAddOrder: (order: Order) => void; // New Prop
   onUpdateShippingZone: (zoneId: string, fee: number) => void;
   onAddShippingZone: (name: string, fee: number) => void;
@@ -51,6 +52,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdatePrice,
   onSetFlashSale,
   onAddProduct,
+  onUpdateProduct,
   onAddOrder,
   onUpdateShippingZone,
   onAddShippingZone,
@@ -204,9 +206,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <td className="p-4 font-black text-slate-900 text-sm">KES {order.total.toLocaleString()}</td>
                           <td className="p-4">
                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${order.status === 'Pending' ? 'bg-amber-100 text-amber-600 border-amber-200' :
-                                order.status === 'Sent' ? 'bg-blue-100 text-blue-600 border-blue-200' :
-                                  order.status === 'In Transit' ? 'bg-purple-100 text-purple-600 border-purple-200' :
-                                    'bg-emerald-100 text-emerald-600 border-emerald-200'
+                              order.status === 'Sent' ? 'bg-blue-100 text-blue-600 border-blue-200' :
+                                order.status === 'In Transit' ? 'bg-purple-100 text-purple-600 border-purple-200' :
+                                  'bg-emerald-100 text-emerald-600 border-emerald-200'
                               }`}>
                               {order.status}
                             </span>
@@ -242,6 +244,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               onDeleteProduct={onDeleteProduct}
               onSetFlashSale={onSetFlashSale}
               onAddProduct={onAddProduct}
+              onUpdateProduct={onUpdateProduct}
               onAddCategory={onAddCategory}
               onDeleteCategory={onDeleteCategory}
               setSystemAlert={setSystemAlert}

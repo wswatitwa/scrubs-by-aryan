@@ -10,6 +10,7 @@ interface InventorySectionProps {
     onDeleteProduct: (productId: string) => void;
     onSetFlashSale: (productId: string, discount: number) => void;
     onAddProduct: (product: Omit<Product, 'id'>) => void;
+    onUpdateProduct: (product: Product) => void;
     onAddCategory: (name: string) => void;
     onDeleteCategory: (name: string) => void;
     setSystemAlert: (alert: { message: string, type: string } | null) => void;
@@ -27,6 +28,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     onDeleteProduct,
     onSetFlashSale,
     onAddProduct,
+    onUpdateProduct,
     onAddCategory,
     onDeleteCategory,
     setSystemAlert
@@ -35,6 +37,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
 
     // Local UI State
     const [showAddModal, setShowAddModal] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [newCategory, setNewCategory] = useState('');
 
@@ -81,36 +86,68 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         }
 
         const file = fileInputRef.current?.files?.[0];
-        if (!file) {
+        // Image is required only for NEW products. For edits, existing image is OK.
+        if (!file && !previewImage) {
             setSystemAlert({ message: 'Image File Required', type: 'error' });
             return;
         }
 
         setUploading(true);
         try {
-            const imageUrl = await uploadProductImage(file);
-            onAddProduct({
+            let imageUrl = previewImage;
+            if (file) {
+                imageUrl = await uploadProductImage(file);
+            }
+
+            const productData = {
                 name: newProduct.name,
                 category: newProduct.category,
                 price: parseFloat(newProduct.price),
                 description: newProduct.description,
-                image: imageUrl,
+                image: imageUrl!,
                 stock: parseInt(newProduct.stock),
                 colors: newProduct.colors ? newProduct.colors.split(',').map(c => ({ name: c.trim(), hex: '#000000' })) : [],
                 sizes: newProduct.sizes ? newProduct.sizes.split(',').map(s => s.trim()) : [],
                 isFeatured: false,
                 embroideryPrice: newProduct.embroideryPrice ? parseFloat(newProduct.embroideryPrice) : undefined
-            });
+            };
+
+            if (isEditMode && editingId) {
+                onUpdateProduct({ ...productData, id: editingId });
+                setSystemAlert({ message: 'Product Updated Successfully', type: 'success' });
+            } else {
+                onAddProduct(productData);
+                setSystemAlert({ message: 'Product Added Successfully', type: 'success' });
+            }
+
             setShowAddModal(false);
             setNewProduct({ name: '', category: 'Apparel', price: '', description: '', stock: '50', colors: '', sizes: '', embroideryPrice: '' });
             setPreviewImage(null);
-            setSystemAlert({ message: 'Product Added Successfully', type: 'success' });
+            setIsEditMode(false);
+            setEditingId(null);
         } catch (err) {
-            setSystemAlert({ message: 'Upload Failed', type: 'error' });
+            setSystemAlert({ message: 'Upload/Update Failed', type: 'error' });
         } finally {
             setUploading(false);
             setTimeout(() => setSystemAlert(null), 3000);
         }
+    };
+
+    const openEditModal = (product: Product) => {
+        setNewProduct({
+            name: product.name,
+            category: product.category,
+            price: product.price.toString(),
+            description: product.description,
+            stock: product.stock.toString(),
+            colors: product.colors?.map(c => c.name).join(', ') || '',
+            sizes: product.sizes?.join(', ') || '',
+            embroideryPrice: product.embroideryPrice?.toString() || ''
+        });
+        setPreviewImage(product.image);
+        setEditingId(product.id);
+        setIsEditMode(true);
+        setShowAddModal(true);
     };
 
     return (
@@ -151,6 +188,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                                     </button>
                                     <button onClick={() => setProductToFlashSale(product.id)} className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-amber-500 hover:bg-amber-500 hover:text-white transition-all" title="Set Flash Sale">
                                         <i className="fa-solid fa-tags text-[10px]"></i>
+                                    </button>
+                                    <button onClick={() => openEditModal(product)} className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all" title="Edit Product">
+                                        <i className="fa-solid fa-pen text-[10px]"></i>
                                     </button>
                                 </div>
                                 <button onClick={() => setProductToDelete(product.id)} className="text-[10px] font-black text-slate-300 hover:text-red-500 uppercase tracking-wider transition-colors">

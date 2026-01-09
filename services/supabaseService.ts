@@ -59,7 +59,7 @@ export const api = {
         return data ? { ...product } : null; // Return original assuming success or mapped data
     },
 
-    async updateProduct(product: Product): Promise<void> {
+    async updateProduct(product: Product): Promise<Product | null> {
         const { reviews, ...productData } = product;
         const dbProduct = {
             name: product.name,
@@ -75,11 +75,18 @@ export const api = {
             sizes: product.sizes,
             styles: product.styles,
             materials: product.materials,
-            package_size: product.packageSize
+            package_size: product.packageSize,
+            model: product.model,
+            warranty: product.warranty,
+            includes: product.includes
         };
 
-        const { error } = await supabase.from('products').update(dbProduct).eq('id', product.id);
-        if (error) console.error('Error updating product:', error);
+        const { data, error } = await supabase.from('products').update(dbProduct).eq('id', product.id).select().single();
+        if (error) {
+            console.error('Error updating product:', error);
+            return null;
+        }
+        return data ? { ...product } : null;
     },
 
     async deleteProduct(id: string): Promise<void> {
