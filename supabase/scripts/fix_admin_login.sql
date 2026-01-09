@@ -23,20 +23,18 @@ CREATE POLICY "Admins can manage profiles"
       auth.uid() IN (SELECT id FROM staff_profiles WHERE role = 'admin')
     );
 
--- 2. Force Sync Profile ID (Fixes "Profile not linked" / ID Mismatch)
--- We delete any existing profile for this email to clear bad IDs
-DELETE FROM public.staff_profiles WHERE email = 'wwatitwa@gmail.com';
+-- 2. Force Sync Profile ID (Fixes match by ID directly)
+DELETE FROM public.staff_profiles WHERE id = 'aff7dd06-1c94-481a-853d-f8c2e6c390e3';
 
--- We insert a fresh profile using the EXACT ID from `auth.users`
+-- We insert a fresh profile using the EXACT ID
 INSERT INTO public.staff_profiles (id, name, email, role, permissions)
-SELECT 
-  id, 
-  'Super Admin', 
-  email, 
-  'admin', 
+VALUES (
+  'aff7dd06-1c94-481a-853d-f8c2e6c390e3',
+  'Super Admin',
+  'wwatitwa@gmail.com', -- This is for display, auth uses the ID
+  'admin',
   '{"access_orders": true, "access_inventory": true, "access_revenue_data": true}'
-FROM auth.users 
-WHERE email = 'wwatitwa@gmail.com';
+);
 
 -- 3. Verify Result
-SELECT * FROM public.staff_profiles WHERE email = 'wwatitwa@gmail.com';
+SELECT * FROM public.staff_profiles WHERE id = 'aff7dd06-1c94-481a-853d-f8c2e6c390e3';

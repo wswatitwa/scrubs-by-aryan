@@ -7,7 +7,7 @@ import OrderManifestModal from './admin/OrderManifestModal';
 import InventorySection from './admin/InventorySection';
 import ShippingSection from './admin/ShippingSection';
 import SocialSection from './admin/SocialSection';
-import StoreConfigSection from './admin/StoreConfigSection'; // Import the new component (we will create it next)
+import ManualOrderModal from './admin/ManualOrderModal';
 
 interface AdminDashboardProps {
   currentUser: StaffMember;
@@ -21,6 +21,7 @@ interface AdminDashboardProps {
   onUpdatePrice: (productId: string, newPrice: number) => void;
   onSetFlashSale: (productId: string, discount: number) => void;
   onAddProduct: (product: Omit<Product, 'id'>) => void;
+  onAddOrder: (order: Order) => void; // New Prop
   onUpdateShippingZone: (zoneId: string, fee: number) => void;
   onAddShippingZone: (name: string, fee: number) => void;
   onDeleteShippingZone: (id: string) => void;
@@ -49,6 +50,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdatePrice,
   onSetFlashSale,
   onAddProduct,
+  onAddOrder,
   onUpdateShippingZone,
   onAddShippingZone,
   onDeleteShippingZone,
@@ -68,6 +70,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [systemAlert, setSystemAlert] = useState<{ message: string, type: string } | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isManualOrderOpen, setIsManualOrderOpen] = useState(false);
 
   const isAdmin = currentUser.role === 'admin';
 
@@ -129,13 +132,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
             <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">Command <span className="text-blue-600">Center</span></h1>
           </div>
-          <button
-            onClick={onLogout}
-            className="px-8 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 w-fit shadow-sm"
-          >
-            <i className="fa-solid fa-power-off"></i>
-            Secure Sign-out
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setIsManualOrderOpen(true)}
+              className="px-8 py-3 bg-emerald-600 border border-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500 transition-all flex items-center gap-2 w-fit shadow-lg shadow-emerald-500/20"
+            >
+              <i className="fa-solid fa-plus"></i>
+              New Order
+            </button>
+            <button
+              onClick={onLogout}
+              className="px-8 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 w-fit shadow-sm"
+            >
+              <i className="fa-solid fa-power-off"></i>
+              Secure Sign-out
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-4 mb-10">
@@ -253,6 +265,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           onMarkShipped={handleMarkShipped}
+        />
+      )}
+
+      {isManualOrderOpen && (
+        <ManualOrderModal
+          products={products}
+          onClose={() => setIsManualOrderOpen(false)}
+          onSubmit={(order) => {
+            onAddOrder({ ...order, id: 'ORD-' + Date.now() }); // Generate proper ID
+            setIsManualOrderOpen(false);
+            setSystemAlert({ message: 'Manual Order Created', type: 'system' });
+            setTimeout(() => setSystemAlert(null), 3000);
+          }}
         />
       )}
     </div>

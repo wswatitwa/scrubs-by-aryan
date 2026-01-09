@@ -273,47 +273,56 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleCheckoutComplete = (name: string, phone: string, location: string, fee: number, code: string, notes?: string) => {
-    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    // Generate ID locally for offline capability
-    const orderId = `ORD-${Math.floor(Math.random() * 9000) + 1000}`;
+  // Centralized Order Creation (Offline Safe)
+  const handleCreateOrder = async (order: Order) => {
+    try {
+      const { db } = await import('./lib/db');
+      const { syncService } = await import('./services/syncService');
 
+      // 1. Save to Local DB (Immediate UI feedback + Archive)
+      await db.orders.put(order);
+
+      // 2. Queue for Sync (Ensures it reaches Cloud eventually)
+      await db.syncQueue.add({
+        table: 'orders',
+        action: 'CREATE',
+        data: order,
+        status: 'pending',
+        timestamp: Date.now()
+      });
+
+      // 3. Update State
+      setOrders(prev => [order, ...prev]);
+
+      // 4. Trigger Sync (Best effort)
+      syncService.triggerSync();
+
+      return true;
+    } catch (err) {
+      console.error("Order creation failed:", err);
+      return false;
+    }
+  };
+
+  const handleCheckoutComplete = async (name: string, phone: string, location: string, fee: number, code: string, notes?: string) => {
     const newOrder: Order = {
-      id: orderId,
+      id: `ORD-${Date.now()}`,
       customerName: name,
       customerPhone: phone,
-      location: location,
-      items: [...cart],
-      subtotal,
+      location,
+      items: cart,
+      subtotal: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0),
       shippingFee: fee,
-      total: subtotal + fee,
-      status: 'Paid',
+      total: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) + fee,
+      status: 'Pending',
       mpesaCode: code,
-      createdAt: new Date().toISOString(),
-      shippingMethod: 'Nationwide Express Hub',
-      notes: notes
+
+      shippingMethod: fee === 0 ? 'Pickup' : 'Delivery',
+      notes,
+      createdAt: new Date().toISOString()
     };
 
-    // Reduce Stock (Optimistic UI)
-    setProducts(prevProducts => prevProducts.map(p => {
-      const cartItem = cart.find(c => c.id === p.id);
-      if (cartItem) {
-        return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) };
-      }
-      return p;
-    }));
-
-    setOrders([newOrder, ...orders]);
-    setLastOrder(newOrder);
-    setCart([]);
-    setIsCheckoutOpen(false);
-    setIsCartOpen(false);
-
-    // Save to Local DB (Offline First Strategy)
-    // The SyncService will automatically pick this up and push to Supabase
-    import('./lib/db').then(({ saveOrderLocally }) => {
-      saveOrderLocally(newOrder, navigator.onLine);
-    });
+    await handleCreateOrder(newOrder);
 
     // Trigger automatic receipt download
     generateReceipt(newOrder);
@@ -321,6 +330,12 @@ const App: React.FC = () => {
     const alertData = notifyStaffOfNewOrder(newOrder.id);
     setStaffAlert(alertData.message);
     setTimeout(() => setStaffAlert(null), 8000);
+
+    // Legacy logic cleanup
+    setIsCheckoutOpen(false);
+    setCart([]);
+    setIsReceiptOpen(true);
+    setCurrentOrder(newOrder);
   };
 
   const handleStaffLogin = (user: StaffMember) => {
@@ -366,6 +381,7 @@ const App: React.FC = () => {
             }
           }}
           onAddProduct={handleAddProduct}
+          onAddOrder={handleCreateOrder}
           onUpdateShippingZone={(id, fee) => {
             const zone = shippingZones.find(z => z.id === id);
             if (zone) {
