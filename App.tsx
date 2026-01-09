@@ -239,12 +239,16 @@ const App: React.FC = () => {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (confirm('Are you sure? This will delete the category and its subcategories.')) {
+    // UI component handles confirmation
+    try {
       await api.deleteCategory(id);
       setCategories(prev => prev.filter(c => c.id !== id));
       setStaffAlert("Category Deleted");
-      setTimeout(() => setStaffAlert(null), 3000);
+    } catch (e) {
+      console.error("Delete category failed", e);
+      setStaffAlert("❌ Delete Failed");
     }
+    setTimeout(() => setStaffAlert(null), 3000);
   };
   // --------------------------
 
