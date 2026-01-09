@@ -344,12 +344,14 @@ export const api = {
     },
 
     subscribeToProducts(onChange: (eventType: 'INSERT' | 'UPDATE' | 'DELETE', product: Product) => void): any {
+        console.log("🔌 Initializing Product Subscription...");
         return supabase
             .channel('public:products')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'products' },
                 (payload: any) => {
+                    console.log("🔔 Product Update Realtime:", payload);
                     if (payload.eventType === 'DELETE') {
                         // For delete, we only get the ID usually if replica identity is default
                         onChange('DELETE', { id: payload.old.id } as Product);
@@ -368,7 +370,11 @@ export const api = {
                     onChange(payload.eventType, product);
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') console.log("✅ Successfully subscribed to products.");
+                if (status === 'CHANNEL_ERROR') console.error("❌ Failed to subscribe to products.");
+                if (status === 'TIMED_OUT') console.error("⚠️ Product subscription timed out.");
+            });
     },
 
     subscribeToCategories(onChange: (eventType: 'INSERT' | 'UPDATE' | 'DELETE', category: any) => void): any {
