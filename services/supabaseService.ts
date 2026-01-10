@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Product, Order, ShippingZone, TenderInquiry, StoreSettings, StaffMember, Review, SocialMediaLinks } from '../types';
+import { DbProductSchema, DbOrderSchema, DbCategorySchema, DbTenderSchema } from '../src/types/schema';
 
 export const api = {
     // --- Products ---
@@ -8,20 +9,30 @@ export const api = {
             .from('products')
             .select('*, reviews(*)');
 
+
         if (error) {
             console.error('Error fetching products:', error);
             return [];
         }
 
-        // Map DB snake_case to camelCase
-        return data?.map((p: any) => ({
-            ...p,
-            subCategory: p.sub_category,
-            originalPrice: p.original_price,
-            isFeatured: p.is_featured,
-            embroideryPrice: p.embroidery_price,
-            packageSize: p.package_size
-        })) as Product[];
+        // Validate and Map
+        return data?.map((p: any) => {
+            try {
+                const dbProd = DbProductSchema.parse(p);
+                return {
+                    ...dbProd,
+                    subCategory: dbProd.sub_category,
+                    originalPrice: dbProd.original_price ?? undefined,
+                    isFeatured: dbProd.is_featured,
+                    embroideryPrice: dbProd.embroidery_price,
+                    packageSize: dbProd.package_size,
+                    reviews: p.reviews || [] // Keep loose for relations for now
+                };
+            } catch (err) {
+                console.error("Product Schema Validation Failed for ID:", p.id, err);
+                return null;
+            }
+        }).filter(Boolean) as Product[];
     },
 
     async createProduct(product: Product): Promise<Product | null> {
@@ -169,27 +180,35 @@ export const api = {
     // --- Orders ---
     async getOrders(): Promise<Order[]> {
         const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+
         if (error) {
             console.error('Error fetching orders:', error);
             return [];
         }
 
-        // Map snake_case to camelCase
-        return data.map((o: any) => ({
-            id: o.id,
-            customerName: o.customer_name,
-            customerPhone: o.customer_phone,
-            location: o.location,
-            items: o.items,
-            subtotal: o.subtotal,
-            shippingFee: o.shipping_fee,
-            total: o.total,
-            status: o.status,
-            mpesaCode: o.mpesa_code,
-            shippingMethod: o.shipping_method,
-            notes: o.notes,
-            createdAt: o.created_at
-        }));
+        return data.map((o: any) => {
+            try {
+                const dbOrder = DbOrderSchema.parse(o);
+                return {
+                    id: dbOrder.id,
+                    customerName: dbOrder.customer_name,
+                    customerPhone: dbOrder.customer_phone,
+                    location: dbOrder.location,
+                    items: dbOrder.items,
+                    subtotal: dbOrder.subtotal,
+                    shippingFee: dbOrder.shipping_fee,
+                    total: dbOrder.total,
+                    status: dbOrder.status as any,
+                    mpesaCode: dbOrder.mpesa_code,
+                    shippingMethod: dbOrder.shipping_method,
+                    notes: dbOrder.notes || undefined,
+                    createdAt: dbOrder.created_at
+                };
+            } catch (err) {
+                console.error("Order Validation Failed:", o.id, err);
+                return null;
+            }
+        }).filter(Boolean) as Order[];
     },
 
     async createOrder(order: Order): Promise<void> {
@@ -436,4 +455,37 @@ export const api = {
             )
             .subscribe();
     },
+
+    // --- Inventory Ops ---
+    async decrementStock(productId: string, quantity: number): Promise<boolean> {
+        const { data, error } = await supabase.rpc('decrement_stock', { p_id: productId, quantity });
+        if (error) {
+            console.error('Error decrementing stock:', error);
+            return false;
+        }
+        return data as boolean;
+    },
+
+    async processCheckout(order: Order): Promise<{ success: boolean, error?: string, orderId?: string }> {
+        // Prepare data for RPC
+        // We pass the order object and the items separately (though items are inside order, the RPC takes items explicitly for iteration convenience usually, 
+        // but our SQL uses p_items for loop and p_items for insert. Let's just pass order.items as p_items).
+
+        const { data, error } = await supabase.rpc('create_order_transaction', {
+            p_order: order,
+            p_items: order.items
+        });
+
+        if (error) {
+            console.error("Checkout RPC Error:", error);
+            return { success: false, error: error.message };
+        }
+
+        // The RPC returns a JSONB object: { success: boolean, error?: string, orderId?: string }
+        if (data && !data.success) {
+            return { success: false, error: data.error };
+        }
+
+        return { success: true, orderId: data.orderId };
+    }
 };

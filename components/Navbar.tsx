@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import MobileMenu from './MobileMenu';
 
 interface NavbarProps {
@@ -14,11 +15,10 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onOpenTracking, onOpenSearch, isAdmin, activePath, categories }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const navigateTo = (path: string, e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    window.history.pushState({}, '', path);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+  const handleNavigate = (path: string) => {
+    navigate(path);
   };
 
   const isActive = (path: string) => activePath === path ? 'text-cyan-400 bg-white/5 rounded-xl' : 'hover:text-cyan-400';
@@ -50,7 +50,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onOpenTracking, 
                 </button>
               )}
 
-              <a href="/" onClick={(e) => navigateTo('/', e)} className="flex items-center gap-4 md:gap-6 group">
+              <Link to="/" className="flex items-center gap-4 md:gap-6 group">
                 <div className="w-12 h-12 md:w-16 md:h-16 bg-cyan-500 rounded-[1.2rem] md:rounded-[1.5rem] flex items-center justify-center brand-pulse transform group-hover:rotate-12 transition-all duration-500 shadow-xl">
                   <i className="fa-solid fa-staff-snake text-[#001a1a] text-2xl md:text-3xl"></i>
                 </div>
@@ -62,19 +62,18 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onOpenTracking, 
                     BY ARYAN
                   </span>
                 </div>
-              </a>
+              </Link>
 
               {!isAdmin && (
                 <div className="hidden xl:flex items-center space-x-2 text-[11px] font-black uppercase tracking-[0.2em] text-white/70">
-                  {menuItems.map(link => (
-                    <a
+                  {menuItems.map((link) => (
+                    <Link
                       key={link.name}
-                      href={link.path}
-                      onClick={(e) => navigateTo(link.path, e)}
+                      to={link.path}
                       className={`px-4 py-2 transition-all ${isActive(link.path)}`}
                     >
                       {link.name}
-                    </a>
+                    </Link>
                   ))}
 
                   <div className="w-px h-8 bg-white/10 mx-4"></div>
@@ -118,7 +117,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onOpenTracking, 
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         activePath={activePath}
-        onNavigate={(path) => navigateTo(path)}
+        onNavigate={handleNavigate}
         onOpenTracking={onOpenTracking}
         categories={menuItems}
       />

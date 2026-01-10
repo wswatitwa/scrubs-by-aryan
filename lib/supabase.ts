@@ -39,28 +39,32 @@ export const uploadProductImage = async (file: File): Promise<string> => {
   });
 };
 
+export const fetchStaffProfile = async (userId: string): Promise<StaffMember | null> => {
+  const { data, error } = await supabase
+    .from('staff_profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) return null;
+
+  // Fetch email from auth user if possible, or store it in profile.
+  // For now, we'll try to get it from the session if available in the caller, 
+  // or we can just return the profile data.
+  // Note: staff_profiles might not have email. auth.users has it.
+  // We will assume email is passed or retrieved separately if needed, 
+  // but let's see if we can get it from the user object in the session.
+
+  return {
+    id: data.id,
+    name: data.full_name || 'Staff Member',
+    email: '', // Start empty, fill in App.tsx from auth.user
+    role: data.role as 'admin' | 'staff',
+    permissions: { access_orders: true, access_inventory: true, access_revenue_data: data.role === 'admin' }
+  };
+};
+
+// Legacy mock - kept for type compliance if needed, but unused in new flow
 export const fetchStaffList = async (): Promise<StaffMember[]> => {
-  return [
-    {
-      id: 'st-001',
-      name: 'Super Admin',
-      email: 'hq@crubs.com',
-      role: 'admin',
-      permissions: { access_orders: true, access_inventory: true, access_revenue_data: true }
-    },
-    {
-      id: 'st-002',
-      name: 'Store Manager',
-      email: 'nyahururu-store@crubs.com',
-      role: 'staff',
-      permissions: { access_orders: true, access_inventory: true, access_revenue_data: false }
-    },
-    {
-      id: 'st-003',
-      name: 'Logistics Clerk',
-      email: 'delivery@crubs.com',
-      role: 'staff',
-      permissions: { access_orders: true, access_inventory: false, access_revenue_data: false }
-    }
-  ];
+  return [];
 };

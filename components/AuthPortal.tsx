@@ -27,35 +27,17 @@ const AuthPortal: React.FC<AuthPortalProps> = ({ onLogin, onCancel }) => {
 
       if (error) throw error;
 
-      if (data.session) {
-        // Fetch user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('staff_profiles')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .single();
+      // Login successful. The global onAuthStateChange listener in App.tsx will handle the rest.
+      // We call onLogin just to satisfy the interface or trigger any immediate UI cleanup if needed.
+      // In this new flow, we don't manually construct the full StaffMember here.
+      // passing a dummy object to satisfy the prop; the parent state will update via the listener.
+      onLogin({ id: data.user.id, email: data.user.email!, name: 'Loading...', role: 'staff', permissions: { access_orders: true, access_inventory: true, access_revenue_data: false } });
 
-        if (profileError) {
-          throw new Error('Profile not linked to user.');
-        }
-
-        const staffMember: StaffMember = {
-          id: profile.id,
-          name: profile.name,
-          email: profile.email,
-          role: profile.role as 'admin' | 'staff',
-          permissions: profile.permissions || { access_orders: true, access_inventory: false, access_revenue_data: false }
-        };
-
-        onLogin(staffMember);
-      }
     } catch (err: any) {
       console.error('Login Error:', err);
       // Show exact error from Supabase to help User debug (e.g. "Email not confirmed")
-      if (err.message && (err.message.includes('Email') || err.message.includes('password'))) {
-        setError(err.message);
-      } else if (err.message === 'Profile not linked to user.') {
-        setError('User exists but has no Staff Profile. Contact System Admin.');
+      if (err.message && (err.message.includes('Email') || err.message.includes('password') || err.message.includes('credential'))) {
+        setError('Invalid credentials. Please contact HQ.');
       } else {
         setError('Login failed: ' + (err.message || 'Unknown error'));
       }
