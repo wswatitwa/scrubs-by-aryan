@@ -10,6 +10,12 @@ interface SocialSectionProps {
 const SocialSection: React.FC<SocialSectionProps> = ({ socialLinks, onUpdateSocialLinks, setSystemAlert }) => {
     const [socialEdit, setSocialEdit] = useState<SocialMediaLinks>(socialLinks || { whatsapp: '', facebook: '', instagram: '' });
 
+    React.useEffect(() => {
+        if (socialLinks) {
+            setSocialEdit(socialLinks);
+        }
+    }, [socialLinks]);
+
     return (
         <div className="p-8 space-y-8 max-w-2xl mx-auto">
             <div>

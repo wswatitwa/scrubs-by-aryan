@@ -120,6 +120,19 @@ const App: React.FC = () => {
           api.getCategories()
         ]);
 
+        // Load Social from LocalStorage first (Instant)
+        const savedSocial = localStorage.getItem('crubs_social_links');
+        if (savedSocial) setSocialLinks(JSON.parse(savedSocial));
+
+        // Then try API
+        try {
+          const fetchedSocial = await api.getSocialLinks();
+          if (fetchedSocial) {
+            setSocialLinks(fetchedSocial);
+            localStorage.setItem('crubs_social_links', JSON.stringify(fetchedSocial));
+          }
+        } catch (e) { console.warn("Social links API failed, using local"); }
+
         if (fetchedProducts.length > 0) setProducts(fetchedProducts);
         if (fetchedZones.length > 0) setShippingZones(fetchedZones);
         if (fetchedCategories.length > 0) setCategories(fetchedCategories);
@@ -324,6 +337,12 @@ const App: React.FC = () => {
     api.updateStoreSettings(settings);
   };
 
+  const handleUpdateSocialLinks = async (links: SocialMediaLinks) => {
+    setSocialLinks(links);
+    localStorage.setItem('crubs_social_links', JSON.stringify(links));
+    await api.updateSocialLinks(links);
+  };
+
   const handleAddShippingZone = (name: string, fee: number) => {
     setShippingZones(prev => [...prev, { id: `ZONE-${Date.now()}`, name, fee, estimatedDays: '3-5 Days' }]);
   };
@@ -525,7 +544,7 @@ const App: React.FC = () => {
             api.deleteShippingZone(id);
           }}
           socialLinks={socialLinks}
-          onUpdateSocialLinks={setSocialLinks}
+          onUpdateSocialLinks={handleUpdateSocialLinks}
           storeSettings={storeSettings}
           onUpdateSettings={handleUpdateSettings}
           onLogout={handleLogout}
@@ -665,7 +684,7 @@ const App: React.FC = () => {
             </div>
           </section>
         </main>
-        <SocialFeed postUrl={socialLinks.facebookPostUrl} />
+        <SocialFeed postUrl={socialLinks.facebookPostUrl} pageId={socialLinks.facebookPageId} pageUrl={socialLinks.facebook} />
         <Footer
           socialLinks={socialLinks}
           onOpenTracking={() => setIsTrackingOpen(true)}

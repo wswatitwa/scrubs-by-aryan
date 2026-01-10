@@ -2,9 +2,11 @@ import React, { useEffect } from 'react';
 
 interface SocialFeedProps {
     postUrl?: string;
+    pageId?: string;
+    pageUrl?: string;
 }
 
-const SocialFeed: React.FC<SocialFeedProps> = ({ postUrl }) => {
+const SocialFeed: React.FC<SocialFeedProps> = ({ postUrl, pageId, pageUrl }) => {
     useEffect(() => {
         // Reparse XFBML when component mounts or URL changes
         // @ts-ignore
@@ -12,9 +14,9 @@ const SocialFeed: React.FC<SocialFeedProps> = ({ postUrl }) => {
             // @ts-ignore
             window.FB.XFBML.parse();
         }
-    }, [postUrl]);
+    }, [postUrl, pageId, pageUrl]);
 
-    if (!postUrl) return null;
+    if (!postUrl && !pageId && !pageUrl) return null;
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 border-t border-white/5">
@@ -26,12 +28,31 @@ const SocialFeed: React.FC<SocialFeedProps> = ({ postUrl }) => {
             </div>
 
             <div className="flex justify-center">
-                <div
-                    className="fb-post"
-                    data-href={postUrl}
-                    data-width="500"
-                    data-show-text="true"
-                ></div>
+                {postUrl ? (
+                    <div
+                        className="fb-post"
+                        data-href={postUrl}
+                        data-width="500"
+                        data-show-text="true"
+                    ></div>
+                ) : (
+                    pageUrl && (
+                        <div
+                            className="fb-page"
+                            data-href={pageUrl}
+                            data-tabs="timeline"
+                            data-width="500"
+                            data-height=""
+                            data-small-header="false"
+                            data-adapt-container-width="true"
+                            data-hide-cover="false"
+                            data-show-facepile="true">
+                            <blockquote cite={pageUrl} className="fb-xfbml-parse-ignore">
+                                <a href={pageUrl}>CRUBS</a>
+                            </blockquote>
+                        </div>
+                    )
+                )}
             </div>
         </div>
     );

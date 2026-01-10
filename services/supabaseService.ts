@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Product, Order, ShippingZone, TenderInquiry, StoreSettings, StaffMember, Review } from '../types';
+import { Product, Order, ShippingZone, TenderInquiry, StoreSettings, StaffMember, Review, SocialMediaLinks } from '../types';
 
 export const api = {
     // --- Products ---
@@ -277,6 +277,41 @@ export const api = {
         };
         const { error } = await supabase.from('tenders').insert(dbTender);
         if (error) console.error(error);
+    },
+
+    // --- Social Media ---
+    async getSocialLinks(): Promise<SocialMediaLinks> {
+        const { data, error } = await supabase.from('social_links').select('*').single();
+        if (error || !data) {
+            return {
+                whatsapp: '+254 722 435698',
+                facebook: 'https://web.facebook.com/p/Scrubs-by-Aryan-Ke-61554847971027/?_rdc=1&_rdr#',
+                instagram: '',
+                facebookPostUrl: ''
+            };
+        }
+        return {
+            whatsapp: data.whatsapp,
+            facebook: data.facebook,
+            instagram: data.instagram,
+            facebookPageId: data.facebook_page_id,
+            instagramToken: data.instagram_token,
+            facebookPostUrl: data.facebook_post_url
+        };
+    },
+
+    async updateSocialLinks(links: SocialMediaLinks): Promise<void> {
+        const dbLinks = {
+            id: 1, // Singleton row
+            whatsapp: links.whatsapp,
+            facebook: links.facebook,
+            instagram: links.instagram,
+            facebook_page_id: links.facebookPageId,
+            instagram_token: links.instagramToken,
+            facebook_post_url: links.facebookPostUrl
+        };
+        const { error } = await supabase.from('social_links').upsert(dbLinks);
+        if (error) console.error('Error updating social links:', error);
     },
 
     // --- Settings ---
