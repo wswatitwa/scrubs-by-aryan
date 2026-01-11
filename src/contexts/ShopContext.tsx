@@ -182,7 +182,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // --- Admin Mutations ---
   const addProduct = async (p: Product) => {
-    setProducts(prev => [p, ...prev]); // Optimistic
+    // Removed optimistic update to rely on Realtime and prevent ID conflicts
     const success = await api.createProduct(p);
     if (!success) {
       console.error("Failed to add product");

@@ -63,6 +63,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     const [productToFlashSale, setProductToFlashSale] = useState<string | null>(null);
     const [flashSaleDiscount, setFlashSaleDiscount] = useState<string>('20');
 
+    // Category Deletion State
+    const [categoryToDelete, setCategoryToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [subCategoryToDelete, setSubCategoryToDelete] = useState<{ categoryId: string, subName: string } | null>(null);
+
     const [isSuccess, setIsSuccess] = useState(false); // New success state
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +126,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 await onAddProduct(productData);
                 setSystemAlert({ message: 'Product Added Successfully', type: 'success' });
             }
-
 
             // Show success state
             setIsSuccess(true);
@@ -309,11 +312,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     </div>
                 </div>
             )}
-
-            {/* Manage Categories Modal */}
             {showCategoryModal && (
                 <div className="fixed inset-0 z-[450] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
                     <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 max-h-[80vh] overflow-y-auto">
+                        {/* Wrapper for content to allow modals to stack or replace */}
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Manage <span className="text-blue-600">Categories</span></h3>
@@ -368,7 +370,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        if (confirm(`Delete category "${cat.name}" and all contents?`)) onDeleteCategory(cat.id);
+                                                        setCategoryToDelete({ id: cat.id, name: cat.name });
                                                     }}
                                                     className="w-8 h-8 rounded-full hover:bg-red-100 text-slate-300 hover:text-red-500 transition-colors flex items-center justify-center"
                                                 >
@@ -417,12 +419,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                                                 <span className="text-sm font-bold text-slate-700">{sub}</span>
                                                 <button
                                                     onClick={() => {
-                                                        if (confirm(`Remove sub-category "${sub}"?`)) {
-                                                            const updatedSubs = selectedCategory.subCategories.filter(s => s !== sub);
-                                                            onUpdateCategory(selectedCategory.id, { subCategories: updatedSubs });
-                                                            // Optimistic update
-                                                            setSelectedCategory({ ...selectedCategory, subCategories: updatedSubs });
-                                                        }
+                                                        setSubCategoryToDelete({ categoryId: selectedCategory.id, subName: sub });
                                                     }}
                                                     className="text-slate-300 hover:text-red-500 transition-colors px-2"
                                                 >
@@ -442,6 +439,68 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* Category Delete Confirmation Modal */}
+            {categoryToDelete && (
+                <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-red-900/40 backdrop-blur-md">
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 text-center">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                            <i className="fa-solid fa-triangle-exclamation text-2xl"></i>
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">Delete Category?</h3>
+                        <p className="text-xs text-slate-500 font-bold mb-6">Are you sure you want to remove "{categoryToDelete.name}"? All products in this category will need re-categorizing.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setCategoryToDelete(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">Cancel</button>
+                            <button
+                                onClick={() => {
+                                    onDeleteCategory(categoryToDelete.id);
+                                    setCategoryToDelete(null);
+                                    // If we were viewing it (unlikely as we delete from list, but safety check)
+                                    if (selectedCategory?.id === categoryToDelete.id) setSelectedCategory(null);
+                                }}
+                                className="flex-1 py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 shadow-xl shadow-red-200 transition-colors"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Sub-Category Delete Confirmation Modal */}
+            {subCategoryToDelete && (
+                <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-red-900/40 backdrop-blur-md">
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300 text-center">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                            <i className="fa-solid fa-eraser text-2xl"></i>
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">Remove Sub-Category</h3>
+                        <p className="text-xs text-slate-500 font-bold mb-6">Confirm removing "{subCategoryToDelete.subName}" from the list?</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setSubCategoryToDelete(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">Cancel</button>
+                            <button
+                                onClick={() => {
+                                    // Logic to remove sub from category
+                                    const cat = categories.find(c => c.id === subCategoryToDelete.categoryId);
+                                    if (cat) {
+                                        const updatedSubs = (cat.subCategories || []).filter(s => s !== subCategoryToDelete.subName);
+                                        onUpdateCategory(cat.id, { subCategories: updatedSubs });
+                                        // Update selected category local state if open
+                                        if (selectedCategory && selectedCategory.id === cat.id) {
+                                            setSelectedCategory({ ...selectedCategory, subCategories: updatedSubs });
+                                        }
+                                    }
+                                    setSubCategoryToDelete(null);
+                                }}
+                                className="flex-1 py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 shadow-xl shadow-red-200 transition-colors"
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* Delete Confirmation Modal */}
             {productToDelete && (

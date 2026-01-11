@@ -21,7 +21,7 @@ interface AdminDashboardProps {
   onDeleteProduct: (productId: string) => void;
   onUpdatePrice: (productId: string, newPrice: number) => void;
   onSetFlashSale: (productId: string, discount: number) => void;
-  onAddProduct: (product: Omit<Product, 'id'>) => void;
+  onAddProduct: (product: Omit<Product, 'id'>) => Promise<void> | void;
   onUpdateProduct: (product: Product) => void;
   onAddOrder: (order: Order) => void; // New Prop
   onUpdateShippingZone: (zoneId: string, fee: number) => void;

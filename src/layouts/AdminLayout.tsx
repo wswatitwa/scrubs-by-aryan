@@ -83,6 +83,8 @@ const AdminLayout: React.FC = () => {
                     if (success) {
                         setStaffAlert("✅ Product Added");
                         setTimeout(() => setStaffAlert(null), 3000);
+                    } else {
+                        throw new Error("Failed to add product");
                     }
                 }}
                 onUpdateProduct={async (p) => {
@@ -90,6 +92,8 @@ const AdminLayout: React.FC = () => {
                     if (success) {
                         setStaffAlert("✅ Product Updated");
                         setTimeout(() => setStaffAlert(null), 3000);
+                    } else {
+                        throw new Error("Failed to update product");
                     }
                 }}
                 onAddOrder={handleCreateOrder}
@@ -103,19 +107,31 @@ const AdminLayout: React.FC = () => {
                 onLogout={logout}
                 categories={categories}
                 onAddCategory={async (name, subs) => {
-                    await addCategory(name, subs);
-                    setStaffAlert("Category Added");
-                    setTimeout(() => setStaffAlert(null), 3000);
+                    const success = await addCategory(name, subs);
+                    if (success) {
+                        setStaffAlert("Category Added");
+                        setTimeout(() => setStaffAlert(null), 3000);
+                    } else {
+                        throw new Error("Failed to add category");
+                    }
                 }}
                 onUpdateCategory={async (id, updates) => {
-                    await updateCategory(id, updates);
-                    setStaffAlert("Category Updated");
-                    setTimeout(() => setStaffAlert(null), 3000);
+                    const success = await updateCategory(id, updates);
+                    if (success) {
+                        setStaffAlert("Category Updated");
+                        setTimeout(() => setStaffAlert(null), 3000);
+                    } else {
+                        throw new Error("Failed to update category");
+                    }
                 }}
                 onDeleteCategory={async (id) => {
-                    await deleteCategory(id);
-                    setStaffAlert("Category Deleted");
-                    setTimeout(() => setStaffAlert(null), 3000);
+                    const success = await deleteCategory(id);
+                    if (success) {
+                        setStaffAlert("Category Deleted");
+                        setTimeout(() => setStaffAlert(null), 3000);
+                    } else {
+                        throw new Error("Failed to delete category");
+                    }
                 }}
                 onUpdateStaff={(s) => login(s)}
                 onDeleteStaff={() => logout()}
