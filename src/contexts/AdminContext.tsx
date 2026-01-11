@@ -72,8 +72,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 .select('*')
                 .eq('id', userId)
                 .single();
-            if (directData) return processProfileData(directData, email);
             if (directData) return processProfileData(directData, email, userId);
+
         } else if (data) {
             return processProfileData(data, email, userId);
         }
