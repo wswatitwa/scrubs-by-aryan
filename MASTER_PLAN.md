@@ -104,18 +104,35 @@ Our goal is to transition from a "Prototype" to a "Production-Grade Platform".
     *   Deployed `validate_subcategory` trigger.
     *   Confirmed Admin UI restricts inputs to valid options only.
 
-### Task 2.3: Security Hardening (Reviews) (🚨 CRITICAL)
+### Task 2.3: Security Hardening (Reviews) (✅ COMPLETED)
 *   **Trigger**: Supabase Advisory.
-*   **Plan**: `TASK-011-Reviews-Security.md`.
+*   **Deliverable**: RLS Policies for Reviews.
 *   **Details**:
-    *   Enable RLS on `reviews`.
-    *   Marketplace: Allow Public Read/Insert.
-    *   Moderation: Restrict Delete/Update to Staff.
+    *   Enabled RLS on `reviews`.
+    *   **Marketplace**: Allowed Public Read/Insert.
+    *   **Moderation**: Restricted Delete/Update to Staff.
+
+### Task 2.4: Staff Security & Profiles (✅ COMPLETED)
+*   **Trigger**: Supabase Advisory.
+*   **Deliverable**: RLS Policies & Real Auth Sync.
+*   **Details**:
+    *   Enabled RLS on `staff_profiles`.
+    *   `AdminContext` now driven by `supabase.auth`.
+    *   Admin Identity is live and secure.
+
+---
+
+### Task 2.5: UX Polish & Fixes (TASK-014) (✅ COMPLETED)
+*   **Deliverable**: Dynamic Router & Navbar Fixes.
+*   **Details**:
+    *   **Router**: `:categorySlug` wildcard implemented.
+    *   **Navbar**: Scrollable container prevents overflow.
+    *   **Admin**: "Live" status badge added.
 
 ---
 
 ## Phase 3: The Frontier (Customer Experience)
-**Current Status**: 🚀 Ready to Launch.
+**Current Status**: 🟢 Active.
 
 ### Task 3.1: Performance & SEO (✅ COMPLETED)
 *   **Deliverable**: `react-helmet-async` engine.

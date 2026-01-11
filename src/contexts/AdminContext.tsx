@@ -28,29 +28,84 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     // Auth Initialization
     useEffect(() => {
-        const savedSession = localStorage.getItem('crubs_staff_session');
-        if (savedSession) {
-            try {
-                setCurrentStaff(JSON.parse(savedSession));
-            } catch (e) {
-                localStorage.removeItem('crubs_staff_session');
-            }
-        }
+        // 1. Initial Session Check
+        import('../../lib/supabase').then(({ supabase }) => {
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    fetchProfile(session.user.id, session.user.email!);
+                } else {
+                    setCurrentStaff(null);
+                }
+            });
+
+            // 2. Realtime Listener
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+                if (session) {
+                    // Only fetch if we don't already have the correct user loaded
+                    if (currentStaff?.id !== session.user.id) {
+                        fetchProfile(session.user.id, session.user.email!);
+                    }
+                } else {
+                    setCurrentStaff(null);
+                    localStorage.removeItem('crubs_staff_session'); // clear legacy if any
+                }
+            });
+
+            return () => subscription.unsubscribe();
+        });
     }, []);
 
-    const login = (user: StaffMember) => {
-        localStorage.setItem('crubs_staff_session', JSON.stringify(user));
-        setCurrentStaff(user);
+    const fetchProfile = async (userId: string, email: string) => {
+        const { api } = await import('../../services/supabaseService'); // Dynamic import to avoid cycles if any
+        const { supabase } = await import('../../lib/supabase');
+
+        // Fetch profile from 'staff_profiles'
+        const { data, error } = await supabase
+            .from('staff_profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (data) {
+            // Map DB profile to StaffMember
+            // staff_profiles: id, name, role, permissions (json)
+            const staff: StaffMember = {
+                id: data.id,
+                email: email, // Email comes from Auth User, not necessarily profile
+                name: data.name,
+                role: data.role,
+                permissions: data.permissions || { access_orders: false, access_inventory: false, access_revenue_data: false }
+            };
+            setCurrentStaff(staff);
+        } else {
+            console.warn("Profile not found for user:", userId);
+            // Fallback for bootstrap / first login if profile missing
+            setCurrentStaff({
+                id: userId,
+                email,
+                name: 'Unknown Staff',
+                role: 'staff',
+                permissions: { access_orders: false, access_inventory: false, access_revenue_data: false }
+            });
+        }
     };
 
-    const logout = () => {
-        localStorage.removeItem('crubs_staff_session');
+    const login = async (user: StaffMember) => {
+        // This is now purely for legacy/optimistic UI updates, 
+        // actual auth is handled by Supabase Listener.
+        // We can leave it empty or use it to force-fetch.
+    };
+
+    const logout = async () => {
+        const { supabase } = await import('../../lib/supabase');
+        await supabase.auth.signOut();
         setCurrentStaff(null);
     };
 
     // Admin Data Loading
     useEffect(() => {
         if (!currentStaff) return;
+        // ... (Rest of data loading logic remains same)
 
         let subscription: any = null;
         let pollInterval: any = null;

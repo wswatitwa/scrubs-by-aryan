@@ -65,31 +65,36 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onOpenTracking, 
               </Link>
 
               {!isAdmin && (
-                <div className="hidden xl:flex items-center space-x-2 text-[11px] font-black uppercase tracking-[0.2em] text-white/70">
-                  {menuItems.map((link) => (
-                    <Link
-                      key={link.name}
-                      to={link.path}
-                      className={`px-4 py-2 transition-all ${isActive(link.path)}`}
+                <div className="hidden xl:flex items-center gap-6">
+                  {/* Category Scroll Container */}
+                  <div className="flex items-center space-x-2 text-[11px] font-black uppercase tracking-[0.2em] text-white/70 overflow-x-auto max-w-[600px] no-scrollbar mask-gradient-x p-2">
+                    {menuItems.map((link) => (
+                      <Link
+                        key={link.name}
+                        to={link.path}
+                        className={`px-4 py-2 whitespace-nowrap transition-all ${isActive(link.path)}`}
+                      >
+                        {link.name}
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="w-px h-8 bg-white/10 mx-2 flex-shrink-0"></div>
+
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <button
+                      onClick={onOpenSearch}
+                      className="hover:text-cyan-400 transition-colors flex items-center gap-2 group/search px-4"
                     >
-                      {link.name}
-                    </Link>
-                  ))}
-
-                  <div className="w-px h-8 bg-white/10 mx-4"></div>
-
-                  <button
-                    onClick={onOpenSearch}
-                    className="hover:text-cyan-400 transition-colors flex items-center gap-2 group/search px-4"
-                  >
-                    <i className="fa-solid fa-magnifying-glass text-[11px] group-hover/search:scale-110 transition-transform"></i>
-                  </button>
-                  <button
-                    onClick={onOpenTracking}
-                    className="px-6 py-2 bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 rounded-xl hover:bg-cyan-500 hover:text-[#001a1a] transition-all flex items-center gap-2 group"
-                  >
-                    Tracking
-                  </button>
+                      <i className="fa-solid fa-magnifying-glass text-[11px] group-hover/search:scale-110 transition-transform"></i>
+                    </button>
+                    <button
+                      onClick={onOpenTracking}
+                      className="px-6 py-2 bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 rounded-xl hover:bg-cyan-500 hover:text-[#001a1a] transition-all flex items-center gap-2 group whitespace-nowrap"
+                    >
+                      Tracking
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

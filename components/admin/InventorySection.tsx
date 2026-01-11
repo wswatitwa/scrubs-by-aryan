@@ -182,6 +182,11 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                                     </div>
                                 </div>
                                 {product.originalPrice && <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">Sale</span>}
+                                {product.stock > 0 && (
+                                    <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider animate-pulse">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live
+                                    </span>
+                                )}
                             </div>
 
                             <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">

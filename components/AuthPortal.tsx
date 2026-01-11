@@ -27,11 +27,15 @@ const AuthPortal: React.FC<AuthPortalProps> = ({ onLogin, onCancel }) => {
 
       if (error) throw error;
 
-      // Login successful. The global onAuthStateChange listener in App.tsx will handle the rest.
-      // We call onLogin just to satisfy the interface or trigger any immediate UI cleanup if needed.
-      // In this new flow, we don't manually construct the full StaffMember here.
-      // passing a dummy object to satisfy the prop; the parent state will update via the listener.
-      onLogin({ id: data.user.id, email: data.user.email!, name: 'Loading...', role: 'staff', permissions: { access_orders: true, access_inventory: true, access_revenue_data: false } });
+      // Login successful. The global onAuthStateChange listener in App.tsx/AdminContext will handle the rest.
+      // We call onLogin with a placeholder just to trigger any modal closure if standard behavior requires it,
+      // but essentially the context will update itself.
+
+      // onLogin is technically "void" in the interface used by AdminLayout to remove the portal?
+      // Actually AdminLayout watches currentStaff. If listener updates currentStaff, AuthPortal disappears.
+      // So we might not even need to call onLogin if the state updates fast enough.
+      // But let's keep it for safety.
+      onLogin({ id: data.user.id, email: data.user.email!, name: 'Verifying...', role: 'staff', permissions: { access_orders: false, access_inventory: false, access_revenue_data: false } });
 
     } catch (err: any) {
       console.error('Login Error:', err);

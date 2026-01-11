@@ -5,21 +5,29 @@ import ProductCard from '../../components/ProductCard';
 import { useShop } from '../contexts/ShopContext';
 
 const CategoryPage: React.FC = () => {
-    const { categoryName } = useParams<{ categoryName: string }>(); // e.g. "apparel"
+    const { categorySlug } = useParams<{ categorySlug: string }>(); // e.g. "apparel" or "lab-coats"
     const location = useLocation();
     const { products, categories, addToCart } = useShop();
     const navigate = useNavigate();
 
-    // Deduce category from URL if params matches (e.g., /apparel) or if param exists
-    // If path is /apparel, normalizedName should be Apparel.
-    const pathPart = location.pathname.split('/').filter(Boolean)[0];
-    const derivedName = categoryName || pathPart;
+    // If valid categorySlug is present, use it. Otherwise fall back to location (less reliable now with wildcard)
+    const derivedSlug = categorySlug || location.pathname.split('/').filter(Boolean)[0];
 
-    // Normalize category name from URL to match Data
-    const normalizedName = (derivedName || '').charAt(0).toUpperCase() + (derivedName || '').slice(1).toLowerCase();
+    // Convert slug "lab-coats" -> "Lab Coats"
+    // 1. Remove hyphens
+    // 2. Capitalize words (simple approach) or match against known category names
+    const normalizeSlug = (slug: string) => {
+        if (!slug) return '';
+        return slug.replace(/-/g, ' ');
+    };
 
-    // Find category config
-    const category = categories.find(c => c.name.toLowerCase() === (derivedName || '').toLowerCase());
+    const searchName = normalizeSlug(derivedSlug);
+
+    // Find category config by matching name case-insensitively
+    const category = categories.find(c => c.name.toLowerCase() === searchName.toLowerCase());
+
+    // Normalized Name for Display (use found category name or formatted slug)
+    const normalizedName = category ? category.name : (searchName.charAt(0).toUpperCase() + searchName.slice(1));
 
     // Default fallbacks if category not found?
     const getTheme = (cat: string) => {

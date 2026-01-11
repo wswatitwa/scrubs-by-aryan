@@ -21,32 +21,7 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: 'apparel',
-        element: <CategoryPage />,
-      },
-      {
-        path: 'equipment',
-        element: <CategoryPage />,
-      },
-      {
-        path: 'diagnostics',
-        element: <CategoryPage />,
-      },
-      {
-        path: 'accessories',
-        element: <CategoryPage />,
-      },
-      {
-        path: 'footwear',
-        element: <CategoryPage />,
-      },
-      {
-        path: 'ppe',
-        element: <CategoryPage />,
-      },
-      // Generic Fallback for dynamic categories if we add more
-      {
-        path: 'category/:categoryName',
+        path: ':categorySlug',
         element: <CategoryPage />,
       }
     ],
