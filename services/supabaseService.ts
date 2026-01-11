@@ -18,16 +18,16 @@ const mapDBProductToApp = (data: any): Product => {
             stock: data.stock,
             colors: data.colors || [],
             sizes: data.sizes || [],
-            styles: data.styles,
-            materials: data.materials,
+            styles: data.styles || [],
+            materials: data.materials || [],
             isFeatured: data.is_featured,
             originalPrice: data.original_price,
-            reviews: [], // Realtime usually doesn't send deep relations
+            reviews: [],
             embroideryPrice: data.embroidery_price,
             packageSize: data.package_size,
             model: data.model,
             warranty: data.warranty,
-            includes: data.includes
+            includes: data.includes || []
         };
     } catch (e) {
         console.error("Map Error", e);
