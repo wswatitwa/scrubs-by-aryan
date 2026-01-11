@@ -286,11 +286,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 onUpdatePermissions={updatePermissions}
                 onUpdateStaff={(updated) => {
                   setStaffList(prev => prev.map(s => s.id === updated.id ? updated : s));
-                  onUpdateStaff(updated); // Propagate to parent if needed, but local state update is key for UI
+                  if (onUpdateStaff) onUpdateStaff(updated); // Propagate to parent if needed, but local state update is key for UI
                 }}
                 onDeleteStaff={(id) => {
                   setStaffList(prev => prev.filter(s => s.id !== id));
-                  onDeleteStaff(id);
+                  if (onDeleteStaff) onDeleteStaff(id);
                 }}
                 onCreateStaff={(data) => {
                   const newS: StaffMember = { ...data, id: `st-${Date.now()}`, role: 'staff', permissions: { access_orders: true, access_inventory: false, access_revenue_data: false } };

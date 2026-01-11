@@ -129,10 +129,56 @@ Our goal is to transition from a "Prototype" to a "Production-Grade Platform".
     *   **Navbar**: Scrollable container prevents overflow.
     *   **Admin**: "Live" status badge added.
 
+### Task 2.6: Realtime Replication Fix (✅ COMPLETED)
+*   **Trigger**: Data Sync bug.
+*   **Deliverable**: `supabase_realtime` Publication Updated.
+*   **Details**:
+    *   Added tables to `supabase_realtime` publication.
+    *   Set `REPLICA IDENTITY FULL` for reliable updates.
+
+### Task 2.7: Security Hardening (Shipping) (✅ COMPLETED)
+*   **Trigger**: Supabase Advisory.
+*   **Deliverable**: RLS enabled on `shipping_zones`.
+*   **Details**:
+    *   Public Read (Checkout), Staff Write.
+
+### Task 2.8: Security Hardening (Settings) (✅ COMPLETED)
+*   **Trigger**: Supabase Advisory.
+*   **Deliverable**: RLS enabled on `store_settings`.
+*   **Details**:
+    *   Public Read (Embroidery Fee), Staff Update.
+
+### Task 2.9: Security Hardening (Tenders) (✅ COMPLETED)
+*   **Trigger**: Supabase Advisory.
+*   **Deliverable**: RLS enabled on `tenders`.
+*   **Details**:
+    *   Enable RLS on `tenders`.
+    *   Public Insert (Inquiry), Staff Manage private.
+
+### Task 2.10: Security Hardening (RPC) (✅ COMPLETED)
+*   **Trigger**: Supabase Advisory.
+*   **Deliverable**: Fixed RPC Search Path.
+*   **Details**:
+    *   Fix mutable `search_path` in `create_order_transaction`.
+
+### Task 2.11: Security Hardening (Categories) (✅ COMPLETED)
+*   **Trigger**: Supabase Advisory.
+*   **Deliverable**: Fixed Category RLS.
+*   **Details**:
+    *   Revoke "Public Delete" policy.
+    *   Restrict Management to Staff.
+
+### Task 2.12: Strict Policy Refinement (Linter) (🚨 CRITICAL)
+*   **Trigger**: Dashboard Warnings (10x).
+*   **Plan**: `TASK-021-Policy-Refinement.md`.
+*   **Details**:
+    *   Replace `USING (true)` with `is_staff()` function.
+    *   Add Data Validation triggers for Guest Inserts.
+
 ---
 
 ## Phase 3: The Frontier (Customer Experience)
-**Current Status**: 🟢 Active.
+**Current Status**: 🛑 Paused (Awaiting Final Security Patch).
 
 ### Task 3.1: Performance & SEO (✅ COMPLETED)
 *   **Deliverable**: `react-helmet-async` engine.

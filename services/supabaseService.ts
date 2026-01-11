@@ -2,6 +2,39 @@ import { supabase } from '../lib/supabase';
 import { Product, Order, ShippingZone, TenderInquiry, StoreSettings, StaffMember, Review, SocialMediaLinks } from '../types';
 import { DbProductSchema, DbOrderSchema, DbCategorySchema, DbTenderSchema } from '../src/types/schema';
 
+// --- Products ---
+const mapDBProductToApp = (data: any): Product => {
+    try {
+        // Basic mapping without strict schema validation for realtime speed
+        // Or reuse DbProductSchema if you want strictness
+        return {
+            id: data.id,
+            name: data.name,
+            category: data.category,
+            subCategory: data.sub_category,
+            price: data.price,
+            description: data.description,
+            image: data.image,
+            stock: data.stock,
+            colors: data.colors || [],
+            sizes: data.sizes || [],
+            styles: data.styles,
+            materials: data.materials,
+            isFeatured: data.is_featured,
+            originalPrice: data.original_price,
+            reviews: [], // Realtime usually doesn't send deep relations
+            embroideryPrice: data.embroidery_price,
+            packageSize: data.package_size,
+            model: data.model,
+            warranty: data.warranty,
+            includes: data.includes
+        };
+    } catch (e) {
+        console.error("Map Error", e);
+        return {} as Product;
+    }
+};
+
 export const api = {
     // --- Products ---
     async getProducts(): Promise<Product[]> {
@@ -397,37 +430,29 @@ export const api = {
             .subscribe();
     },
 
-    subscribeToProducts(onChange: (eventType: 'INSERT' | 'UPDATE' | 'DELETE', product: Product) => void): any {
-        console.log("🔌 Initializing Product Subscription...");
+    subscribeToProducts: (callback: (type: 'INSERT' | 'UPDATE' | 'DELETE', payload: Product) => void) => {
         return supabase
             .channel('public:products')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'products' },
-                (payload: any) => {
-                    console.log("🔔 Product Update Realtime:", payload);
-                    if (payload.eventType === 'DELETE') {
-                        // For delete, we only get the ID usually if replica identity is default
-                        onChange('DELETE', { id: payload.old.id } as Product);
-                        return;
-                    }
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+                if (payload.errors) return; // Ignore errors
+                const data = payload.new as any;
+                // For DELETE, payload.new is null/empty but payload.old has id.
+                const old = payload.old as any;
 
-                    const p = payload.new;
-                    const product: Product = {
-                        ...p,
-                        subCategory: p.sub_category,
-                        originalPrice: p.original_price,
-                        isFeatured: p.is_featured,
-                        embroideryPrice: p.embroidery_price,
-                        packageSize: p.package_size
-                    };
-                    onChange(payload.eventType, product);
+                let productData: any = {};
+
+                if (payload.eventType === 'DELETE') {
+                    productData = { id: old.id } as Product; // Only ID needed for delete
+                } else {
+                    productData = mapDBProductToApp(data);
                 }
-            )
+
+                callback(payload.eventType as any, productData);
+            })
             .subscribe((status) => {
-                if (status === 'SUBSCRIBED') console.log("✅ Successfully subscribed to products.");
-                if (status === 'CHANNEL_ERROR') console.error("❌ Failed to subscribe to products.");
-                if (status === 'TIMED_OUT') console.error("⚠️ Product subscription timed out.");
+                if (status === 'SUBSCRIBED') {
+                    // specific log handled by consumer if needed
+                }
             });
     },
 
