@@ -120,7 +120,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 description: newProduct.description,
                 image: imageUrl!,
                 stock: parseInt(newProduct.stock),
-                colors: newProduct.colors ? newProduct.colors.split(',').map(c => ({ name: c.trim(), hex: '#000000' })) : [],
+                colors: newProduct.colors ? newProduct.colors.split(',').map(c => ({ name: c.trim(), hex: getColorHex(c.trim()) })) : [],
                 sizes: newProduct.sizes ? newProduct.sizes.split(',').map(s => s.trim()) : [],
                 isFeatured: false,
                 embroideryPrice: newProduct.embroideryPrice ? parseFloat(newProduct.embroideryPrice) : undefined
@@ -259,9 +259,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                             </div>
                             <form onSubmit={handleAddProductSubmit} className="space-y-4">
                                 <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Product Title</label><input required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="e.g. Premium Medical Clogs" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} /></div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Price (KES)</label><input required type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="3500" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} /></div>
-                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Embroidery (Optional)</label><input type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="Def: Global" value={newProduct.embroideryPrice} onChange={e => setNewProduct({ ...newProduct, embroideryPrice: e.target.value })} /></div>
+                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Stock Qty</label><input required type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="50" value={newProduct.stock} onChange={e => setNewProduct({ ...newProduct, stock: e.target.value })} /></div>
+                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Embroidery</label><input type="number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="Def: Global" value={newProduct.embroideryPrice} onChange={e => setNewProduct({ ...newProduct, embroideryPrice: e.target.value })} /></div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>

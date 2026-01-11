@@ -32,16 +32,15 @@ const SocialFeed: React.FC<SocialFeedProps> = ({ postUrl, pageId, pageUrl }) => 
                     <div
                         className="fb-post"
                         data-href={postUrl}
-                        data-width="500"
+                        data-width="300"
                         data-show-text="true"
                     ></div>
                 ) : (
                     pageUrl && (
                         <div
-                            className="fb-page"
                             data-href={pageUrl}
                             data-tabs="timeline"
-                            data-width="500"
+                            data-width="300"
                             data-height=""
                             data-small-header="false"
                             data-adapt-container-width="true"
