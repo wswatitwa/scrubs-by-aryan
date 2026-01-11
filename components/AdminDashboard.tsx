@@ -232,7 +232,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-20 gap-4">
                 <i className="fa-solid fa-lock text-5xl text-slate-100"></i>
-                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Permission 'access_orders' Denied.</p>
+                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Permission 'access_orders' Denied. Current Role: {currentUser.role} (ID: ...{currentUser.id.slice(-4)})</p>
               </div>
             )
           )}

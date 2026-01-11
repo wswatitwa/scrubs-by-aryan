@@ -59,24 +59,35 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const { api } = await import('../../services/supabaseService'); // Dynamic import to avoid cycles if any
         const { supabase } = await import('../../lib/supabase');
 
-        // Fetch profile from 'staff_profiles'
+        // Fetch profile using Secure RPC to bypass RLS issues
         const { data, error } = await supabase
-            .from('staff_profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
+            .rpc('get_my_profile');
 
+        // Fallback or Error Handling
+        if (error) {
+            console.error("RPC Profile Fetch Error:", error);
+            // Attempt Direct connection if RPC fails (backward compat)
+            const { data: directData } = await supabase
+                .from('staff_profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+            if (directData) return processProfileData(directData, email);
+            if (directData) return processProfileData(directData, email, userId);
+        } else if (data) {
+            return processProfileData(data, email, userId);
+        }
+    };
+
+    const processProfileData = (data: any, email: string, userId: string) => {
         if (data) {
-            // Map DB profile to StaffMember
-            // staff_profiles: id, name, role, permissions (json)
-            const staff: StaffMember = {
+            setCurrentStaff({
                 id: data.id,
-                email: email, // Email comes from Auth User, not necessarily profile
+                email: email,
                 name: data.name,
                 role: data.role,
                 permissions: data.permissions || { access_orders: false, access_inventory: false, access_revenue_data: false }
-            };
-            setCurrentStaff(staff);
+            });
         } else {
             console.warn("Profile not found for user:", userId);
             // Fallback for bootstrap / first login if profile missing
