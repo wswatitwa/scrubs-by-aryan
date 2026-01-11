@@ -8,7 +8,7 @@ import { useShop } from '../contexts/ShopContext';
 import { useNavigate } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
-    const { products, socialLinks, addToCart, categories } = useShop();
+    const { products, socialLinks, addToCart, categories, openProductModal } = useShop();
     const navigate = useNavigate();
 
     return (
@@ -50,7 +50,7 @@ const HomePage: React.FC = () => {
                             <ProductCard
                                 key={product.id}
                                 product={product}
-                                onAddToCart={(p) => addToCart(p)}
+                                onClick={openProductModal}
                                 onAddReview={() => { }}
                             />
                         ))}

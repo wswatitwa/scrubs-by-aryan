@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import SEO from '../../components/SEO';
 import Navbar from '../../components/Navbar';
@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import CartSidebar from '../../components/CartSidebar';
 import MpesaPayment from '../../components/MpesaPayment';
 import OrderTracking from '../../components/OrderTracking';
+import ProductDetailsModal from '../../components/ProductDetailsModal'; // Imported Modal
 import { useShop } from '../contexts/ShopContext';
 import { generateReceipt } from '../../ReceiptService';
 import { notifyStaffOfNewOrder } from '../../services/notificationService';
@@ -27,16 +28,21 @@ const StoreLayout: React.FC = () => {
         setIsSearchOpen,
         categories,
         clearCart,
-        addToCart
+        addToCart,
+        // Modal State
+        selectedProduct,
+        closeProductModal,
+        openProductModal,
+        storeSettings
     } = useShop();
 
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
-    const [isTrackingOpen, setIsTrackingOpen] = React.useState(false);
-    const [isTenderOpen, setIsTenderOpen] = React.useState(false);
-    const [trackingId, setTrackingId] = React.useState('');
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [isTrackingOpen, setIsTrackingOpen] = useState(false);
+    const [isTenderOpen, setIsTenderOpen] = useState(false);
+    const [trackingId, setTrackingId] = useState('');
 
     const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
@@ -98,7 +104,6 @@ const StoreLayout: React.FC = () => {
             syncService.triggerSync(); // Will attempt sync when back online
 
             generateReceipt(newOrder);
-            // notifyStaffOfNewOrder is likely online-only or ignored if offline
 
             setIsCheckoutOpen(false);
             clearCart();
@@ -132,6 +137,24 @@ const StoreLayout: React.FC = () => {
                 onOpenTracking={() => setIsTrackingOpen(true)}
                 onOpenTender={() => setIsTenderOpen(true)}
             />
+
+            {/* Global Product Modal */}
+            <ProductDetailsModal
+                product={selectedProduct}
+                isOpen={!!selectedProduct}
+                onClose={closeProductModal}
+                onAddToCart={(product, color, size, style, specialInstructions, quantity, material) => {
+                    addToCart(product, {
+                        selectedColor: color,
+                        selectedSize: size,
+                        selectedStyle: style,
+                        specialInstructions: specialInstructions,
+                        selectedMaterial: material
+                    }, quantity);
+                }}
+                embroideryFee={storeSettings.embroideryFee}
+            />
+
 
             <CartSidebar
                 isOpen={isCartOpen}
@@ -205,7 +228,7 @@ const StoreLayout: React.FC = () => {
                                             <button
                                                 key={p.id}
                                                 onClick={() => {
-                                                    addToCart(p);
+                                                    openProductModal(p); // UPDATED: Open Modal instead of direct Add
                                                     setIsSearchOpen(false);
                                                 }}
                                                 className="w-full flex items-center gap-6 p-4 rounded-2xl hover:bg-slate-50 transition-colors group text-left border border-transparent hover:border-slate-100"

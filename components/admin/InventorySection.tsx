@@ -63,6 +63,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     const [productToFlashSale, setProductToFlashSale] = useState<string | null>(null);
     const [flashSaleDiscount, setFlashSaleDiscount] = useState<string>('20');
 
+    const [isSuccess, setIsSuccess] = useState(false); // New success state
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -74,6 +76,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
 
     const handleAddProductSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (uploading || isSuccess) return; // Prevent double submission
 
         if (parseFloat(newProduct.price) < 0) {
             setSystemAlert({ message: 'Price cannot be negative', type: 'error' });
@@ -119,15 +123,24 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 setSystemAlert({ message: 'Product Added Successfully', type: 'success' });
             }
 
-            setShowAddModal(false);
-            setNewProduct({ name: '', category: 'Apparel', subCategory: '', price: '', description: '', stock: '50', colors: '', sizes: '', embroideryPrice: '' });
-            setPreviewImage(null);
-            setIsEditMode(false);
-            setEditingId(null);
+            // Show success state
+            setIsSuccess(true);
+            setUploading(false); // Stop loading indicator, show success
+
+            // Delay closing logic
+            setTimeout(() => {
+                setShowAddModal(false);
+                setNewProduct({ name: '', category: 'Apparel', subCategory: '', price: '', description: '', stock: '50', colors: '', sizes: '', embroideryPrice: '' });
+                setPreviewImage(null);
+                setIsEditMode(false);
+                setEditingId(null);
+                setIsSuccess(false); // Reset success state
+            }, 1000); // 1.5s delay
+
         } catch (err) {
             setSystemAlert({ message: 'Upload/Update Failed', type: 'error' });
-        } finally {
             setUploading(false);
+        } finally {
             setTimeout(() => setSystemAlert(null), 3000);
         }
     };
@@ -267,7 +280,29 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                                     <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Sizes</label><input className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black" placeholder="S, M, L, XL" value={newProduct.sizes} onChange={e => setNewProduct({ ...newProduct, sizes: e.target.value })} /></div>
                                 </div>
                                 <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label><textarea required rows={3} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-black resize-none" placeholder="Enter fabric details..." value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} /></div>
-                                <button type="submit" disabled={uploading} className="w-full py-5 bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 shadow-xl shadow-blue-100 flex items-center justify-center gap-3 disabled:opacity-50">{uploading ? <i className="fa-solid fa-circle-notch animate-spin"></i> : <i className="fa-solid fa-check"></i>}{uploading ? 'Processing Assets...' : 'Finalize & Publish'}</button>
+                                <button
+                                    type="submit"
+                                    disabled={uploading || isSuccess}
+                                    className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 transition-all ${isSuccess ? 'bg-green-600 text-white shadow-green-100 hover:bg-green-700' : 'bg-blue-700 text-white hover:bg-blue-800 shadow-blue-100'}`}
+                                >
+                                    {uploading ? (
+                                        <>
+                                            <i className="fa-solid fa-circle-notch animate-spin"></i>
+                                            Processing Assets...
+                                        </>
+                                    ) : isSuccess ? (
+                                        <>
+                                            <i className="fa-solid fa-check-double scale-125"></i>
+                                            Published!
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fa-solid fa-check"></i>
+                                            Finalize & Publish
+                                        </>
+                                    )}
+                                </button>
+
                             </form>
                         </div>
                     </div>

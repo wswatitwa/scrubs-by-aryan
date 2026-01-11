@@ -24,6 +24,11 @@ interface ShopContextType {
   isSearchOpen: boolean;
   setIsSearchOpen: (open: boolean) => void;
 
+  // Global Product Modal
+  selectedProduct: Product | null;
+  openProductModal: (product: Product) => void;
+  closeProductModal: () => void;
+
   // Admin Mutations
   addProduct: (product: Product) => Promise<boolean>;
   updateProduct: (product: Product) => Promise<boolean>;
@@ -58,6 +63,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Search
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Product Modal
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const openProductModal = (p: Product) => setSelectedProduct(p);
+  const closeProductModal = () => setSelectedProduct(null);
 
   // Load Data
   useEffect(() => {
@@ -106,7 +116,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (type === 'DELETE') {
             setCategories(prev => prev.filter(c => c.id !== payload.id));
           } else if (type === 'INSERT') {
-            setCategories(prev => [...prev, payload]);
+            setCategories(prev => {
+              if (prev.some(c => c.id === payload.id)) return prev; // Dedup
+              return [...prev, payload];
+            });
           } else if (type === 'UPDATE') {
             setCategories(prev => prev.map(c => c.id === payload.id ? payload : c));
           }
@@ -268,6 +281,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isSearchOpen,
       setIsSearchOpen,
 
+
+
+      // Modal State
+      selectedProduct,
+      openProductModal,
+      closeProductModal,
+
       addProduct,
       updateProduct,
       deleteProduct,
@@ -283,6 +303,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }}>
       {children}
     </ShopContext.Provider>
+
   );
 };
 

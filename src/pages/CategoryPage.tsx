@@ -7,7 +7,7 @@ import { useShop } from '../contexts/ShopContext';
 const CategoryPage: React.FC = () => {
     const { categorySlug } = useParams<{ categorySlug: string }>(); // e.g. "apparel" or "lab-coats"
     const location = useLocation();
-    const { products, categories, addToCart } = useShop();
+    const { products, categories, openProductModal } = useShop();
     const navigate = useNavigate();
 
     // If valid categorySlug is present, use it. Otherwise fall back to location (less reliable now with wildcard)
@@ -93,7 +93,7 @@ const CategoryPage: React.FC = () => {
                         <ProductCard
                             key={item.id}
                             product={item}
-                            onAddToCart={(p) => addToCart(p)}
+                            onClick={openProductModal}
                             onAddReview={() => { }}
                         />
                     ))}
