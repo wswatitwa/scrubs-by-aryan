@@ -440,7 +440,11 @@ export const api = {
         return supabase
             .channel('public:products')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-                if (payload.errors) return; // Ignore errors
+                console.log("🔔 Realtime Product Event:", payload);
+                if (payload.errors) {
+                    console.error("Realtime Payload Errors:", payload.errors);
+                    return;
+                }
                 const data = payload.new as any;
                 // For DELETE, payload.new is null/empty but payload.old has id.
                 const old = payload.old as any;
@@ -456,8 +460,15 @@ export const api = {
                 callback(payload.eventType as any, productData);
             })
             .subscribe((status) => {
+                console.log(`🔌 Products Subscription Status: ${status}`);
                 if (status === 'SUBSCRIBED') {
-                    // specific log handled by consumer if needed
+                    console.log("✅ Listening for Product Updates...");
+                }
+                if (status === 'CHANNEL_ERROR') {
+                    console.error("❌ Products Channel Error");
+                }
+                if (status === 'TIMED_OUT') {
+                    console.error("⚠️ Products Subscription Timed Out");
                 }
             });
     },

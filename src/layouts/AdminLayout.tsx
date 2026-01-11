@@ -79,7 +79,8 @@ const AdminLayout: React.FC = () => {
                     }
                 }}
                 onAddProduct={async (p) => {
-                    const success = await addProduct({ ...p, id: `prod-${Date.now()}` });
+                    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `prod-${Date.now()}`;
+                    const success = await addProduct({ ...p, id });
                     if (success) {
                         setStaffAlert("✅ Product Added");
                         setTimeout(() => setStaffAlert(null), 3000);

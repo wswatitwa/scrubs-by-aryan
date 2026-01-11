@@ -106,7 +106,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (type === 'DELETE') {
             setProducts(prev => prev.filter(p => p.id !== payload.id));
           } else if (type === 'INSERT') {
-            setProducts(prev => [payload, ...prev]);
+            setProducts(prev => {
+              if (prev.some(p => p.id === payload.id)) return prev; // Dedup
+              return [payload, ...prev];
+            });
           } else if (type === 'UPDATE') {
             setProducts(prev => prev.map(p => p.id === payload.id ? payload : p));
           }
@@ -180,12 +183,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const clearCart = () => setCart([]);
 
-  // --- Admin Mutations ---
   const addProduct = async (p: Product) => {
-    // Removed optimistic update to rely on Realtime and prevent ID conflicts
+    setProducts(prev => [p, ...prev]); // Restore Optimistic Update for instant feedback
     const success = await api.createProduct(p);
     if (!success) {
       console.error("Failed to add product");
+      // Revert if failed
+      setProducts(prev => prev.filter(prod => prod.id !== p.id));
     }
     return !!success;
   };

@@ -57,6 +57,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         embroideryPrice: ''
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null); // Robust file tracking
 
     // Action Modals State
     const [productToDelete, setProductToDelete] = useState<string | null>(null);
@@ -72,6 +73,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setSelectedFile(file);
             const reader = new FileReader();
             reader.onloadend = () => setPreviewImage(reader.result as string);
             reader.readAsDataURL(file);
@@ -92,8 +94,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             return;
         }
 
-        const file = fileInputRef.current?.files?.[0];
-        if (!file && !previewImage) {
+        // Use state instead of ref for reliability
+        if (!selectedFile && !previewImage) {
             setSystemAlert({ message: 'Image File Required', type: 'error' });
             return;
         }
@@ -101,8 +103,13 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         setUploading(true);
         try {
             let imageUrl = previewImage;
-            if (file) {
-                imageUrl = await uploadProductImage(file);
+            if (selectedFile) {
+                try {
+                    imageUrl = await uploadProductImage(selectedFile);
+                } catch (uploadErr) {
+                    console.error("Upload failed:", uploadErr);
+                    throw new Error("Image upload failed. Check connection.");
+                }
             }
 
             const productData = {
@@ -136,13 +143,15 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 setShowAddModal(false);
                 setNewProduct({ name: '', category: 'Apparel', subCategory: '', price: '', description: '', stock: '50', colors: '', sizes: '', embroideryPrice: '' });
                 setPreviewImage(null);
+                setSelectedFile(null); // Clear file
                 setIsEditMode(false);
                 setEditingId(null);
                 setIsSuccess(false); // Reset success state
             }, 1000); // 1.5s delay
 
-        } catch (err) {
-            setSystemAlert({ message: 'Upload/Update Failed', type: 'error' });
+        } catch (err: any) {
+            console.error("Submission error:", err);
+            setSystemAlert({ message: err.message || 'Upload/Update Failed', type: 'error' });
             setUploading(false);
         } finally {
             setTimeout(() => setSystemAlert(null), 3000);
