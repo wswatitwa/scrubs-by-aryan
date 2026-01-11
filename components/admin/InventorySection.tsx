@@ -9,8 +9,8 @@ interface InventorySectionProps {
     onUpdateStock: (productId: string, newStock: number) => void;
     onDeleteProduct: (productId: string) => void;
     onSetFlashSale: (productId: string, discount: number) => void;
-    onAddProduct: (product: Omit<Product, 'id'>) => void;
-    onUpdateProduct: (product: Product) => void;
+    onAddProduct: (product: Omit<Product, 'id'>) => Promise<void> | void;
+    onUpdateProduct: (product: Product) => Promise<void> | void;
     onAddCategory: (name: string, subCategories?: string[]) => void;
     onUpdateCategory: (id: string, updates: any) => void;
     onDeleteCategory: (id: string) => void;
@@ -116,12 +116,13 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             };
 
             if (isEditMode && editingId) {
-                onUpdateProduct({ ...productData, id: editingId });
+                await onUpdateProduct({ ...productData, id: editingId });
                 setSystemAlert({ message: 'Product Updated Successfully', type: 'success' });
             } else {
-                onAddProduct(productData);
+                await onAddProduct(productData);
                 setSystemAlert({ message: 'Product Added Successfully', type: 'success' });
             }
+
 
             // Show success state
             setIsSuccess(true);
