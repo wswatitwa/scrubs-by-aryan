@@ -104,6 +104,14 @@ Our goal is to transition from a "Prototype" to a "Production-Grade Platform".
     *   Deployed `validate_subcategory` trigger.
     *   Confirmed Admin UI restricts inputs to valid options only.
 
+### Task 2.3: Security Hardening (Reviews) (🚨 CRITICAL)
+*   **Trigger**: Supabase Advisory.
+*   **Plan**: `TASK-011-Reviews-Security.md`.
+*   **Details**:
+    *   Enable RLS on `reviews`.
+    *   Marketplace: Allow Public Read/Insert.
+    *   Moderation: Restrict Delete/Update to Staff.
+
 ---
 
 ## Phase 3: The Frontier (Customer Experience)
@@ -117,10 +125,13 @@ Our goal is to transition from a "Prototype" to a "Production-Grade Platform".
     *   Optimized `HomePage` structure.
 
 ### Task 3.2: User Accounts (Customer)
-*   **Goal**: Retention.
-*   **Actions**:
-    *   Allow storage of delivery details.
-    *   Order History view for customers.
+*   **Status**: 📅 Scheduled for Tomorrow.
+*   **Plan**: `TASK-010-User-Accounts.md`.
+*   **Goal**: Retention & Fast Checkout.
+*   **Details**:
+    *   `profiles` table linked to Auth.
+    *   `orders` table updated with `user_id`.
+    *   `AccountPage` for History/Settings.
 
 
 
