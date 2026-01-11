@@ -59,7 +59,13 @@ export const api = {
                     isFeatured: dbProd.is_featured,
                     embroideryPrice: dbProd.embroidery_price,
                     packageSize: dbProd.package_size,
-                    reviews: p.reviews || [] // Keep loose for relations for now
+                    reviews: p.reviews || [],
+                    // Ensure arrays are never undefined to satisfy UI checks
+                    colors: dbProd.colors || [],
+                    sizes: dbProd.sizes || [],
+                    styles: dbProd.styles || [],
+                    materials: dbProd.materials || [],
+                    includes: dbProd.includes || []
                 };
             } catch (err) {
                 console.error("Product Schema Validation Failed for ID:", p.id, err);
